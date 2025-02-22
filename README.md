@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Logo.jpg" alt="intEx8 Logo" width="350">
+</p>
+
 # intEx8 (**Int**eger **Ex**tended Infinitely) - Arbitrary Precision Integer Library  
 
 ## Overview  
