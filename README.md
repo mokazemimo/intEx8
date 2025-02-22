@@ -20,7 +20,12 @@ Clone the repository and add the source files (*.c, *.h) to your project:
 ```sh
 git clone https://github.com/mokazemimo/intEx8.git
 cd intEx8
-cp intEx8.h intx.h i8.c i8.h ix8.c ix8.h toom3_multiply.c util.h <YOUR_PROJECT_DIRECTORY>
+
+# Copy source files
+cp src/*.c <YOUR_PROJECT_DIRECTORY>/src/
+
+# Copy header files
+cp include/*.h <YOUR_PROJECT_DIRECTORY>/include/
 
 ## License  
 This project is licensed under the **GNU General Public License v3 (GPL-3.0)**.  
