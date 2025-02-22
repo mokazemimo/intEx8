@@ -8,15 +8,15 @@
 - **Bitwise Operations**: AND, OR, XOR, NOT, shifts (`<<`, `>>`).  
 - **Decimal String Conversion**: Convert big integers to/from decimal (`to_string()`, `from_string()`).  
 - **Two Interfaces**:  
-  - **`intex8_`** – Memory-managed API (**caller must free results**).  
-  - **`ix8_`** – Low-level API (**caller provides memory**).  
+  - **`ix8_`** – Memory-managed API (**caller must free results**).  
+  - **`i8_`** – Low-level API (**caller provides memory**).  
 
 ## Installation  
 Clone the repository and add the source files (*.c, *.h) to your project:  
 ```sh
 git clone https://github.com/mokazemimo/intEx8.git
 cd intEx8
-cp intx.h ix8.c ix8.h intex8.c intex8.h toom3_multiply.c util.h <YOUR_PROJECT_DIRECTORY>
+cp intEx8.h intx.h i8.c i8.h ix8.c ix8.h toom3_multiply.c util.h <YOUR_PROJECT_DIRECTORY>
 
 ## License  
 This project is licensed under the **GNU General Public License v3 (GPL-3.0)**.  
