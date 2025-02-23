@@ -139,7 +139,7 @@ static intx_t _add_shifted_to(intx_t a, const uint64_t b, const size_t shift)
 }
 
 /* Internal function. Do NOT call this directly! */
-static intx_t _subtract_shifted_multiple_from(intx_t a, intx_t b, uint64_t b_multiple, int b_shift)
+static intx_t _subtract_shifted_multiple_from(intx_t a, intx_t b, uint64_t b_multiple, size_t b_shift)
 {	// a >= 0, b >= 0 and a >= b * (b_multiple << b_shift)
 	// a -= b * (b_multiple << b_shift)
 	uni64_t u = { 0 };
@@ -164,8 +164,8 @@ static intx_t _subtract_shifted_multiple_from(intx_t a, intx_t b, uint64_t b_mul
 			a.ptr[a.size++] = 0;
 	}
 	else {
-		int digit_shift = b_shift / INTEX8_DIGIT_BIT_WIDTH();
-		int m = b_shift % INTEX8_DIGIT_BIT_WIDTH(), n = INTEX8_DIGIT_BIT_WIDTH() - m;
+		size_t digit_shift = b_shift / INTEX8_DIGIT_BIT_WIDTH();
+		size_t m = b_shift % INTEX8_DIGIT_BIT_WIDTH(), n = INTEX8_DIGIT_BIT_WIDTH() - m;
 		uint64_t h = 0, yL = 0;
 		for (size_t i = digit_shift, j = 0; j <= b.size || u.a != 0 || h != 0; ++i, ++j) {
 			uint64_t x = (i < a.size ? (uint64_t)a.ptr[i] : 0);
@@ -404,10 +404,10 @@ static intx_t _divide_pow2(intx_t x, int64_t p, dig_t* dest)
 			intx_t y = _right_shift(x, p, dest, false);
 			return i8_negate(y, dest);
 		}
-		else if (px >= p) {
+		else if ((px - 1) - p >= 0) {
 			return _get_pow2((px - 1) - p, -1, dest);
 		}
-		else if (-px >= p) {
+		else if (-(px + 1) - p >= 0) {
 			return _get_pow2(-(px + 1) - p, 1, dest);
 		}
 		else {
@@ -1330,6 +1330,9 @@ intx_t i8_right_shift_self(intx_t x, size_t bits)
  */
 char* i8_to_string(const intx_t x, char* buf, size_t buf_size)
 {
+	if (buf_size == 0)
+		return buf;
+
 	char* str = buf;
 	char* ptr = str;
 	const uint64_t p32 = 4294967296 /* 2^32 */;
