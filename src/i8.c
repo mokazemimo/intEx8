@@ -23,7 +23,7 @@ static intx_t _get_pow2(size_t p, int sign, dig_t* dest)
 {
 	intx_t x = { dest, 0 };
 	x.size = p / INTEX8_DIGIT_BIT_WIDTH();
-	for (int i = 0; i < x.size; ++i)
+	for (size_t i = 0; i < x.size; ++i)
 		dest[i] = 0;
 	if (sign > 0) {
 		dest[x.size++] = 1 << (p % INTEX8_DIGIT_BIT_WIDTH());
@@ -94,7 +94,7 @@ static int _get_highest_bit_position(intx_t x)
 }
 
 /* Internal function. Do NOT call this directly! */
-static intx_t _add_shifted_to(intx_t a, const uint64_t b, const size_t shift)
+static intx_t _add_shifted_to(intx_t a, uint64_t b, size_t shift)
 {	// a >= 0, b >= 0
 	// a += (b << shift)
 
@@ -428,8 +428,9 @@ static intx_t _divide_pow2(intx_t x, int64_t p, dig_t* dest)
 	dig_t x_ext = _get_ext(x1);	\
 	size_t i = 0;				\
 	for (; i < x1.size; ++i)	\
+	{							\
 		ret.ptr[i] = x1.ptr[i] ##opr y1.ptr[i];	\
-								\
+	}							\
 	for(; i < y1.size; ++i)		\
 	{							\
 		ret.ptr[i] = x_ext ##opr y1.ptr[i];	\
@@ -437,26 +438,16 @@ static intx_t _divide_pow2(intx_t x, int64_t p, dig_t* dest)
 	ret.size = i;				\
 	return ret;
 
-//-------------------------------------------------------------------------------------------------------
-// Arithmetic operations
-/*
- * Initializes the ix8 interface.
- */
-//int ix8_init()
-//{
-//	intEx8_errno = INTEX8_OK;
-//	return intEx8_errno;
-//}
-
 /*
  * Creates a copy of x and returns the result stored in `dest`.
  * Caller must ensure `dest` has at least `x.size` digits space.
  */
-intx_t i8_copy(intx_t x, dig_t* dest)
+intx_t i8_copy(const intx_t x, dig_t* dest)
 {
 	intx_t y = { dest, x.size };
+	const dig_t* ptr = x.ptr;
 	for (size_t i = 0; i < y.size; ++i)
-		*dest++ = *x.ptr++;
+		*dest++ = *ptr++;
 	return y;
 }
 
@@ -490,8 +481,9 @@ intx_t i8_from_int(int64_t x, dig_t* dest)
 /*
  *  Trims leading trivial digits from a big integer in place.
  */
-intx_t ix8_trim(intx_t x)
+intx_t i8_trim(const intx_t xi)
 {
+	intx_t x = xi;
 	while (x.size >= 2 &&
 		((x.ptr[x.size - 1] == 0 && !_has_sign_bit(x.ptr[x.size - 2])) ||
 			(x.ptr[x.size - 1] == INTEX8_DIGIT_MAX_VALUE() && _has_sign_bit(x.ptr[x.size - 2])))
@@ -501,6 +493,9 @@ intx_t ix8_trim(intx_t x)
 		x.size = 0;
 	return x;
 }
+
+//-------------------------------------------------------------------------------------------------------
+// Arithmetic operations
 
 /*
  * Adds two big integers and returns the result stored in `dest`.
@@ -550,7 +545,7 @@ intx_t i8_x_add_x(const intx_t x, const intx_t y, dig_t* dest)
  * Caller must ensure `dest` has at least `max(x.size, y.size)` digits space.
  * In extreme situations, `dest` may require `max(x.size, y.size) + 1` digits space.
  */
-intx_t i8_x_add_i(intx_t x, int64_t y, dig_t *dest)
+intx_t i8_x_add_i(const intx_t x, int64_t y, dig_t *dest)
 {
 	return i8_x_add_x(x, (intx_t){ (dig_t*)&y, INTEX8_DIGIT_COUNT_IN_64BITS }, dest);
 }
@@ -559,7 +554,7 @@ intx_t i8_x_add_i(intx_t x, int64_t y, dig_t *dest)
  * Adds `y` to `x` in place (x += y).
  * Caller must ensure `x.ptr` has enough space for the result.
  */
-intx_t i8_x_add_eq_x(intx_t x, intx_t y)
+intx_t i8_x_add_eq_x(intx_t x, const intx_t y)
 {
 	return i8_x_add_x(x, y, x.ptr);
 }
@@ -579,7 +574,7 @@ intx_t ix8_x_add_eq_i(intx_t x, int64_t y)
  * Caller must ensure `dest` has at least max(x.size, y.size) digits space.
  * In extreme situations, `dest` may require (max(x.size, y.size) + 1) digits space.
  */
-intx_t i8_x_sub_x(intx_t x, intx_t y, dig_t* dest)
+intx_t i8_x_sub_x(const intx_t x, const intx_t y, dig_t* dest)
 {
 	intx_t z = { dest, 0 };
 	if (x.size == 0 && y.size == 0)
@@ -627,7 +622,7 @@ intx_t i8_x_sub_x(intx_t x, intx_t y, dig_t* dest)
  * Caller must ensure `dest` has at least max(x.size, y.size) digits space.
  * In extreme situations, `dest` may require (max(x.size, y.size) + 1) digits space.
  */
-intx_t i8_x_sub_i(intx_t x, int64_t y, dig_t* dest)
+intx_t i8_x_sub_i(const intx_t x, int64_t y, dig_t* dest)
 {
 	return i8_x_sub_x(x, (intx_t) { (dig_t*)&y, INTEX8_DIGIT_COUNT_IN_64BITS }, dest);
 }
@@ -637,7 +632,7 @@ intx_t i8_x_sub_i(intx_t x, int64_t y, dig_t* dest)
  * Caller must ensure `dest` has at least max(x.size, y.size) digits space.
  * In extreme situations, `dest` may require (max(x.size, y.size) + 1) digits space.
  */
-intx_t i8_i_sub_x(int64_t x, intx_t y, dig_t* dest)
+intx_t i8_i_sub_x(int64_t x, const intx_t y, dig_t* dest)
 {
 	return i8_x_sub_x((intx_t) { (dig_t*)&x, INTEX8_DIGIT_COUNT_IN_64BITS }, y, dest);
 }
@@ -646,7 +641,7 @@ intx_t i8_i_sub_x(int64_t x, intx_t y, dig_t* dest)
  * Subtracts `y` from `x` in place (x -= y).
  * Caller must ensure `x.ptr` has enough space for the result.
  */
-intx_t i8_x_sub_eq_x(intx_t x, intx_t y)
+intx_t i8_x_sub_eq_x(intx_t x, const intx_t y)
 {
 	return i8_x_sub_x(x, y, x.ptr);
 }
@@ -665,23 +660,27 @@ intx_t i8_x_sub_eq_i(intx_t x, int64_t y)
  * Multiplies two big integers and stores the result in `dest`.
  * Caller must ensure `dest` has at least `x.size + y.size` digits space.
  */
-intx_t i8_x_mul_x(intx_t x, intx_t y, dig_t* dest)
+intx_t i8_x_mul_x(const intx_t xi, const intx_t yi, dig_t* dest)
 {
 	size_t zero_count = 0, x_zeros = 0, y_zeros = 0;
 
-	while (x_zeros < x.size && x.ptr[x_zeros] == 0)
+	while (x_zeros < xi.size && xi.ptr[x_zeros] == 0)
 		++x_zeros;
-	if (x_zeros == x.size)
+	if (x_zeros == xi.size)
 		return intx_zero;
 
-	while (y_zeros < y.size && y.ptr[y_zeros] == 0)
+	while (y_zeros < yi.size && yi.ptr[y_zeros] == 0)
 		++y_zeros;
-	if (y_zeros == y.size)
+	if (y_zeros == yi.size)
 		return intx_zero;
 
 	zero_count = x_zeros + y_zeros;
+
+	intx_t x = xi;
 	x.ptr += x_zeros;
 	x.size -= x_zeros;
+
+	intx_t y = yi;
 	y.ptr += y_zeros;
 	y.size -= y_zeros;
 
@@ -747,7 +746,7 @@ intx_t i8_x_mul_x(intx_t x, intx_t y, dig_t* dest)
  * Caller must ensure `dest` has at least `x.size + y.size` digits space.
  * Note: y.size depends on the value of y (see _get_int_size(int64_t)).
  */
-intx_t i8_x_mul_i(intx_t x, int64_t y, dig_t* dest)
+intx_t i8_x_mul_i(const intx_t x, int64_t y, dig_t* dest)
 {
 	return i8_x_mul_x(x, (intx_t) { (dig_t*)&y, INTEX8_DIGIT_COUNT_IN_64BITS }, dest);
 }
@@ -756,31 +755,31 @@ intx_t i8_x_mul_i(intx_t x, int64_t y, dig_t* dest)
  * Divides `x` by `y` and returns the quotient stored in `dest`.
  * Caller must ensure `dest` has enough space for the result.
  */
-intx_t i8_x_div_x(intx_t x, intx_t y, dig_t* dest)
+intx_t i8_x_div_x(const intx_t xi, const intx_t yi, dig_t* dest)
 {
-	if (i8_is_zero(y)) {
+	if (i8_is_zero(yi)) {
 		intEx8_errno = INTEX8_ERR_DIVISION_BY_ZERO;
 		return intx_zero;
 	}
-	if (i8_is_zero(x)) {
+	if (i8_is_zero(xi)) {
 		return intx_zero;
 	}
 
-	int64_t py = i8_is_pow2(y);
+	int64_t py = i8_is_pow2(yi);
 	if (py != 0) {
-		return _divide_pow2(x, py, dest);
+		return _divide_pow2(xi, py, dest);
 	}
-	size_t div_size = _get_quotient_size(x, y);
+	size_t div_size = _get_quotient_size(xi, yi);
 	if (div_size <= 0)
 		return intx_zero;
 
-	if (x.size > INTEX8_MAX_DIVIDEND_DIGITS) {
+	if (xi.size > INTEX8_MAX_DIVIDEND_DIGITS) {
 		intEx8_errno = INTEX8_ERR_MAX_DIVIDEND_DIGITS_EXCEEDED;
 		return intx_zero;
 	}
 
 	dig_t dividend_buf[INTEX8_MAX_DIVIDEND_DIGITS];
-	x = i8_copy(x, dividend_buf);
+	intx_t x = i8_copy(xi, dividend_buf);
 
 	bool negate_x = false, negate_y = false;
 	int sign = 0;
@@ -792,6 +791,7 @@ intx_t i8_x_div_x(intx_t x, intx_t y, dig_t* dest)
 		++sign;
 	}
 
+	intx_t y = yi;
 	// i8_is_min_negative(y) is already checked in i8_is_pow2(y) 
 	if (i8_is_negative(y)) {
 		y = i8_negate_self(y);
@@ -802,7 +802,7 @@ intx_t i8_x_div_x(intx_t x, intx_t y, dig_t* dest)
 	int posy = _get_highest_bit_position(y);
 	int posx = x.size * INTEX8_DIGIT_BIT_WIDTH() - 1;
 
-	if (i8_is_less(ix8_trim(x), ix8_trim(y)))
+	if (i8_is_less(i8_trim(x), i8_trim(y)))
 		return intx_zero;
 
 	intx_t z = { dest, 0 };
@@ -816,7 +816,7 @@ intx_t i8_x_div_x(intx_t x, intx_t y, dig_t* dest)
 		z = _add_shifted_to(z, u, shift);
 		x = _subtract_shifted_multiple_from(x, y, u, shift);
 	}
-	if (posx == posy && i8_is_less_eq(ix8_trim(y), ix8_trim(x))) {
+	if (posx == posy && i8_is_less_eq(i8_trim(y), i8_trim(x))) {
 		if (sign == 1 && i8_is_max_positive(z)) {
 			memset(z.ptr, 0, z.size * sizeof(dig_t));
 			z.ptr[z.size - 1] = INTEX8_DIGIT_MAX_VALUE();
@@ -841,7 +841,7 @@ intx_t i8_x_div_x(intx_t x, intx_t y, dig_t* dest)
  * Divides `x` by `y` and returns the quotient stored in `dest`.
  * Caller must ensure `dest` has enough space for the result.
  */
-intx_t i8_x_div_i(intx_t x, int64_t y, dig_t* dest)
+intx_t i8_x_div_i(const intx_t x, int64_t y, dig_t* dest)
 {
 	return i8_x_div_x(x, (intx_t) { (dig_t*)&y, INTEX8_DIGIT_COUNT_IN_64BITS }, dest);
 }
@@ -850,7 +850,7 @@ intx_t i8_x_div_i(intx_t x, int64_t y, dig_t* dest)
  * Divides `x` by `y` and returns the quotient stored in `dest`.
  * Caller must ensure `dest` has enough space for the result.
  */
-intx_t i8_i_div_x(int64_t x, intx_t y, dig_t* dest)
+intx_t i8_i_div_x(int64_t x, const intx_t y, dig_t* dest)
 {
 	return i8_x_div_x((intx_t) { (dig_t*)&x, INTEX8_DIGIT_COUNT_IN_64BITS }, y, dest);
 }
@@ -859,25 +859,25 @@ intx_t i8_i_div_x(int64_t x, intx_t y, dig_t* dest)
  * Computes `x % y` and returns the result stored in `dest`.
  * Caller must ensure `dest` has at least `x.size` (??????????????????) digits space.
  */
-intx_t i8_x_mod_x(intx_t x, intx_t y, dig_t* dest)
+intx_t i8_x_mod_x(const intx_t xi, const intx_t yi, dig_t* dest)
 {
-	if (i8_is_zero(y)) {
+	if (i8_is_zero(yi)) {
 		intEx8_errno = INTEX8_ERR_DIVISION_BY_ZERO;
 		return intx_zero;
 	}
-	if (i8_is_zero(x)) {
+	if (i8_is_zero(xi)) {
 		return intx_zero;
 	}
 
-	if (x.size > INTEX8_MAX_DIVIDEND_DIGITS) {
+	if (xi.size > INTEX8_MAX_DIVIDEND_DIGITS) {
 		intEx8_errno = INTEX8_ERR_MAX_DIVIDEND_DIGITS_EXCEEDED;
 		return intx_zero;
 	}
 
 	dig_t dividend_buf[INTEX8_MAX_DIVIDEND_DIGITS];
-	x = i8_copy(x, dividend_buf);
+	intx_t x = i8_copy(xi, dividend_buf);
 
-	int64_t py = i8_is_pow2(y);
+	int64_t py = i8_is_pow2(yi);
 	if (py != 0) {
 		return i8_copy(_rightmost_bits(x, py > 0 ? (py - 1) : (-py - 1)), dest);
 	}
@@ -890,6 +890,7 @@ intx_t i8_x_mod_x(intx_t x, intx_t y, dig_t* dest)
 		negate_x = true;
 	}
 
+	intx_t y = yi;
 	if (i8_is_negative(y)) {
 		y = i8_negate_self(y);
 		negate_y = true;
@@ -903,7 +904,7 @@ intx_t i8_x_mod_x(intx_t x, intx_t y, dig_t* dest)
 		int shift = (posx - posy > 32 ? posx - posy - 32 : 0);
 		x = _subtract_shifted_multiple_from(x, y, u, shift);
 	}
-	if (posx == posy && i8_is_less_eq(ix8_trim(y), ix8_trim(x))) {
+	if (posx == posy && i8_is_less_eq(i8_trim(y), i8_trim(x))) {
 		x = _subtract_shifted_multiple_from(x, y, 1, 0);
 	}
 	if (negate_x && i8_is_positive(x))
@@ -918,7 +919,7 @@ intx_t i8_x_mod_x(intx_t x, intx_t y, dig_t* dest)
  * Computes `x % y` and returns the result stored in `dest`.
  * Caller must ensure `dest` has at least `x.size` (??????????????????) digits space.
  */
-intx_t i8_x_mod_i(intx_t x, int64_t y, dig_t* dest)
+intx_t i8_x_mod_i(const intx_t x, int64_t y, dig_t* dest)
 {
 	return i8_x_mod_x(x, (intx_t) { (dig_t*)&y, INTEX8_DIGIT_COUNT_IN_64BITS }, dest);
 }
@@ -927,7 +928,7 @@ intx_t i8_x_mod_i(intx_t x, int64_t y, dig_t* dest)
  * Computes `x % y` and returns the result stored in `dest`.
  * Caller must ensure `dest` has at least `x.size` (??????????????????) digits space.
  */
-intx_t i8_i_mod_x(int64_t x, intx_t y, dig_t* dest)
+intx_t i8_i_mod_x(int64_t x, const intx_t y, dig_t* dest)
 {
 	return i8_x_mod_x((intx_t) { (dig_t*)&x, INTEX8_DIGIT_COUNT_IN_64BITS }, y, dest);
 }
@@ -937,7 +938,7 @@ intx_t i8_i_mod_x(int64_t x, intx_t y, dig_t* dest)
  * Caller must ensure `dest` has at least `x.size` digits.
  * If `x` is an Extreme Negative, `x.size + 1` digits required for `dest`.
  */
-intx_t i8_negate(intx_t x, dig_t* dest)
+intx_t i8_negate(const intx_t x, dig_t* dest)
 {
 	intx_t ret = { dest, x.size };
 	if (x.size == 0)
@@ -977,7 +978,7 @@ intx_t i8_negate_self(intx_t x)
  * Caller must ensure `dest` has at least (x.size) digits.
  * If `x` is an Extreme Negative, (x.size + 1) digits required for `dest`.
  */
-intx_t i8_abs(intx_t x, dig_t* dest)
+intx_t i8_abs(const intx_t x, dig_t* dest)
 {
 	if (i8_is_negative(x)) {
 		return i8_negate(x, dest);
@@ -1001,7 +1002,7 @@ intx_t i8_abs_self(intx_t x)
  * Compares two big integers. Returns `true` if `x == y`, `false` otherwise.
  * Assumes x and y are trimmed.
  */
-bool i8_is_equal(intx_t x, intx_t y)
+bool i8_is_equal(const intx_t x, const intx_t y)
 {
 	if (i8_is_zero(x) && i8_is_zero(y))
 		return true;
@@ -1034,7 +1035,7 @@ bool i8_is_equal(intx_t x, intx_t y)
  * Compares two big integers. Returns `true` if `x <= y`, `false` otherwise.
  * Assumes x and y are trimmed.
  */
-bool i8_is_less_eq(intx_t x, intx_t y)
+bool i8_is_less_eq(const intx_t x, const intx_t y)
 {
 	bool x_is_positive = i8_is_positive(x);
 	bool x_is_negative = i8_is_negative(x);
@@ -1057,10 +1058,11 @@ bool i8_is_less_eq(intx_t x, intx_t y)
 			return false;
 		else {
 			// x.size == y.size
-			while (x.size > 0 && x.ptr[x.size - 1] == y.ptr[x.size - 1])
-				--x.size;
+			size_t s = x.size;
+			while (s > 0 && x.ptr[s - 1] == y.ptr[s - 1])
+				--s;
+			return s == 0 || x.ptr[s - 1] <= y.ptr[s - 1];
 		}
-		return x.size == 0 || x.ptr[x.size - 1] <= y.ptr[x.size - 1];
 	}
 	else {	// x < 0 && y < 0
 		if (x.size < y.size)
@@ -1069,17 +1071,18 @@ bool i8_is_less_eq(intx_t x, intx_t y)
 			return true;
 		else {
 			// x.size == y.size
-			while (x.size > 0 && x.ptr[x.size - 1] == y.ptr[x.size - 1])
-				--x.size;
+			size_t s = x.size;
+			while (s > 0 && x.ptr[s - 1] == y.ptr[s - 1])
+				--s;
+			return s == 0 || x.ptr[s - 1] <= y.ptr[s - 1];
 		}
-		return x.size == 0 || x.ptr[x.size - 1] <= y.ptr[x.size - 1];
 	}
 }
 
 /*
  * Compares a big integer with 0. Returns `true` if `x == 0`, `false` otherwise.
  */
-bool i8_is_zero(intx_t x)
+bool i8_is_zero(const intx_t x)
 {
 	size_t i = 0;
 	while (i < x.size && x.ptr[i] == 0)
@@ -1090,7 +1093,7 @@ bool i8_is_zero(intx_t x)
 /*
  * Compares a big integer with 0. Returns `true` if `x > 0`, `false` otherwise.
  */
-bool i8_is_positive(intx_t x)
+bool i8_is_positive(const intx_t x)
 {
 	return !i8_is_zero(x) && !_has_sign_bit(x.ptr[x.size - 1]);
 }
@@ -1098,7 +1101,7 @@ bool i8_is_positive(intx_t x)
 /*
  * Compares a big integer with 0. Returns `true` if `x < 0`, `false` otherwise.
  */
-bool i8_is_negative(intx_t x)	// x < 0
+bool i8_is_negative(const intx_t x)	// x < 0
 {
 	return x.size > 0 && _has_sign_bit(x.ptr[x.size - 1]);
 }
@@ -1109,7 +1112,7 @@ bool i8_is_negative(intx_t x)	// x < 0
  * Checks if `x` is an Extreme Positive (i.e. ALL bits are set, but highest one).
  * Returns `true` if `x` is an Extreme Positive; `false` otherwise.
  */
-bool i8_is_max_positive(intx_t x)
+bool i8_is_max_positive(const intx_t x)
 {
 	if (x.size == 0)
 		return false;
@@ -1129,7 +1132,7 @@ bool i8_is_max_positive(intx_t x)
  * Checks if `x` is an Extreme Negative (i.e. ONLY highest bit of x is set).
  * Returns `true` if `x` is an Extreme Negative; `false` otherwise.
  */
-bool i8_is_min_negative(intx_t x)
+bool i8_is_min_negative(const intx_t x)
 {
 	if (x.size == 0)
 		return false;
@@ -1149,7 +1152,7 @@ bool i8_is_min_negative(intx_t x)
  * Checks if `x` is of the form `pow(2, n)` or `-pow(2, n)`, for some non-negative integer `n`.
  * Returns `n + 1` if `x == pow(2, n)`; `-(n + 1)` if `x == -pow(2, n)`; `0` otherwise.
  */
-int64_t i8_is_pow2(intx_t x)
+int64_t i8_is_pow2(const intx_t x)
 {
 	size_t i = 0;
 	while (i < x.size && x.ptr[i] == 0)
@@ -1201,7 +1204,7 @@ int64_t i8_is_pow2(intx_t x)
  * Performs bitwise AND operation (&) on two big integers and returns the result (x & y) stored in `dest`.
  * Caller must ensure `dest` has at least max(x.size, y.size) digits.
  */
-intx_t i8_binary_and(intx_t x, intx_t y, dig_t* dest)
+intx_t i8_binary_and(const intx_t x, const intx_t y, dig_t* dest)
 {
 	IX8_BINARY_OPERATION(x, y, dest, &)
 }
@@ -1210,7 +1213,7 @@ intx_t i8_binary_and(intx_t x, intx_t y, dig_t* dest)
  * Performs bitwise OR operation (|) on two big integers and returns the result (x | y) stored in `dest`.
  * Caller must ensure `dest` has at least max(x.size, y.size) digits.
  */
-intx_t i8_binary_or(intx_t x, intx_t y, dig_t* dest)
+intx_t i8_binary_or(const intx_t x, const intx_t y, dig_t* dest)
 {
 	IX8_BINARY_OPERATION(x, y, dest, |)
 }
@@ -1219,7 +1222,7 @@ intx_t i8_binary_or(intx_t x, intx_t y, dig_t* dest)
  * Performs bitwise XOR operation (^) on two big integers and returns the result (x ^ y) stored in `dest`.
  * Caller must ensure `dest` has at least `max(x.size, y.size)` digits.
  */
-intx_t i8_binary_xor(intx_t x, intx_t y, dig_t* dest)
+intx_t i8_binary_xor(const intx_t x, const intx_t y, dig_t* dest)
 {
 	IX8_BINARY_OPERATION(x, y, dest, ^)
 }
@@ -1228,11 +1231,12 @@ intx_t i8_binary_xor(intx_t x, intx_t y, dig_t* dest)
  * Performs bitwise NOT operation (~) on a big integer and returns the result (~x) stored in `dest`.
  * Caller must ensure `dest` has at least `x.size` digits.
  */
-intx_t i8_binary_not(intx_t x, dig_t* dest)
+intx_t i8_binary_not(const intx_t x, dig_t* dest)
 {
 	intx_t ret = { dest, x.size };
+	const dig_t* ptr = x.ptr;
 	for (size_t i = 0; i < x.size; ++i)
-		*dest++ = (~(*x.ptr++));
+		*dest++ = ~(*ptr++);
 	return ret;
 }
 
@@ -1309,7 +1313,7 @@ intx_t i8_left_shift_self(intx_t x, size_t bits)
  * Performs bitwise RIGHT SHIFT operation (>>) and returns the result (x >> bits) stored in `dest`.
  * Caller must ensure `dest` has at least `x.size - bits/INTEX8_DIGIT_BIT_WIDTH()` digits.
  */
-intx_t i8_right_shift(intx_t x, size_t bits, dig_t* dest)
+intx_t i8_right_shift(const intx_t x, size_t bits, dig_t* dest)
 {
 	return _right_shift(x, bits, dest, false);
 }

@@ -53,8 +53,8 @@ static intx_t _call_ix8_2param_interface(intx_t x, intx_t y, size_t size, intx_t
 	if (size == 0)
 		return intx_zero;
 
-	x = ix8_trim(x);
-	y = ix8_trim(y);
+	x = i8_trim(x);
+	y = i8_trim(y);
 	dig_t* buf = (dig_t*)malloc(size * sizeof(dig_t));
 	if (buf == NULL) {
 			intEx8_errno = INTEX8_ERR_MEMORY_ALLOCATION_FAILED;
@@ -75,21 +75,12 @@ static intx_t _call_ix8_bitwise_interface(intx_t x, size_t bits, size_t size, in
 }
 
 /*
- * Initializes the intex8 interface.
- */
-//int intex8_init()
-//{
-//	intEx8_errno = INTEX8_OK;
-//	return intEx8_errno;
-//}
-
-/*
  * Creates a copy of x and returns the result.
  * Caller is responsible for freeing it using `ix8_free()`.
  */
-intx_t ix8_copy(intx_t x)
+intx_t ix8_copy(const intx_t x)
 {
-	return _call_ix8_1param_interface(ix8_trim(x), i8_copy);
+	return _call_ix8_1param_interface(i8_trim(x), i8_copy);
 }
 
 /*
@@ -108,11 +99,12 @@ intx_t ix8_from_int(int64_t x)
 
 //-------------------------------------------------------------------------------------------------------
 // Arithmetic operations
+
 /*
  * Adds two big integers `x`, `y` and returns the result (x + y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_x_add_x(intx_t x, intx_t y)
+intx_t ix8_x_add_x(const intx_t x, const intx_t y)
 {
 	return _call_ix8_2param_interface(x, y, _max(x.size, y.size) + 1, i8_x_add_x);
 }
@@ -121,7 +113,7 @@ intx_t ix8_x_add_x(intx_t x, intx_t y)
  * Adds one big integer `x`, by an int64 `y` and returns the result (x + y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_x_add_i(intx_t x, int64_t y)
+intx_t ix8_x_add_i(const intx_t x, int64_t y)
 {
 	return ix8_x_add_x(x, (intx_t) { (dig_t*)&y, INTEX8_DIGIT_COUNT_IN_64BITS });
 }
@@ -130,7 +122,7 @@ intx_t ix8_x_add_i(intx_t x, int64_t y)
  * Subtracts one big integer `y` from another `x` and returns the result (x - y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_x_sub_x(intx_t x, intx_t y)
+intx_t ix8_x_sub_x(const intx_t x, const intx_t y)
 {
 	return _call_ix8_2param_interface(x, y, _max(x.size, y.size) + 1, i8_x_sub_x);
 }
@@ -139,7 +131,7 @@ intx_t ix8_x_sub_x(intx_t x, intx_t y)
  * Subtracts one int64 `y` from a big integer `x` and returns the result (x - y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_x_sub_i(intx_t x, int64_t y)
+intx_t ix8_x_sub_i(const intx_t x, int64_t y)
 {
 	return ix8_x_sub_x(x, (intx_t) { (dig_t*)&y, INTEX8_DIGIT_COUNT_IN_64BITS });
 }
@@ -148,7 +140,7 @@ intx_t ix8_x_sub_i(intx_t x, int64_t y)
  * Subtracts one big integer `y` from an int64 `x` and returns the result (x - y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_i_sub_x(int64_t x, intx_t y)
+intx_t ix8_i_sub_x(int64_t x, const intx_t y)
 {
 	return ix8_x_sub_x((intx_t) { (dig_t*)&x, INTEX8_DIGIT_COUNT_IN_64BITS }, y);
 }
@@ -157,7 +149,7 @@ intx_t ix8_i_sub_x(int64_t x, intx_t y)
  * Multiplies two big integers `x`, `y` and returns the result (x * y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_x_mul_x(intx_t x, intx_t y)
+intx_t ix8_x_mul_x(const intx_t x, const intx_t y)
 {
 	if (i8_is_zero(x) || i8_is_zero(y))
 		return intx_zero;
@@ -174,7 +166,7 @@ intx_t ix8_x_mul_x(intx_t x, intx_t y)
  * Multiplies one big integer `x` by an int64 `y` and returns the result (x * y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_x_mul_i(intx_t x, int64_t y)
+intx_t ix8_x_mul_i(const intx_t x, int64_t y)
 {
 	return ix8_x_mul_x(x, (intx_t) { (dig_t*)&y, INTEX8_DIGIT_COUNT_IN_64BITS });
 }
@@ -183,10 +175,10 @@ intx_t ix8_x_mul_i(intx_t x, int64_t y)
  * Devides one big integer `x` by another `y` and returns the quotient (x / y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_x_div_x(intx_t x, intx_t y)
+intx_t ix8_x_div_x(const intx_t xi, const intx_t yi)
 {
-	x = ix8_trim(x);
-	y = ix8_trim(y);
+	intx_t x = i8_trim(xi);
+	intx_t y = i8_trim(yi);
 
 	if (i8_is_zero(y)) {
 		intEx8_errno = INTEX8_ERR_DIVISION_BY_ZERO;
@@ -207,7 +199,7 @@ intx_t ix8_x_div_x(intx_t x, intx_t y)
  * Devides one big integer `x` by a int64 `y` and returns the quotient (x / y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_x_div_i(intx_t x, int64_t y)
+intx_t ix8_x_div_i(const intx_t x, int64_t y)
 {
 	return ix8_x_div_x(x, (intx_t) { (dig_t*)&y, INTEX8_DIGIT_COUNT_IN_64BITS });
 }
@@ -216,7 +208,7 @@ intx_t ix8_x_div_i(intx_t x, int64_t y)
  * Devides one int64 `x` by a big integer `y` and returns the quotient (x / y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_i_div_x(int64_t x, intx_t y)
+intx_t ix8_i_div_x(int64_t x, const intx_t y)
 {
 	return ix8_x_div_x((intx_t) { (dig_t*)&x, INTEX8_DIGIT_COUNT_IN_64BITS }, y);
 }
@@ -225,7 +217,7 @@ intx_t ix8_i_div_x(int64_t x, intx_t y)
  * Computes the remainder of the division of one big integer `x` by another `y` (x % y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_x_mod_x(intx_t x, intx_t y)
+intx_t ix8_x_mod_x(const intx_t x, const intx_t y)
 {
 	if (i8_is_zero(y)) {
 		intEx8_errno = INTEX8_ERR_DIVISION_BY_ZERO;
@@ -241,7 +233,7 @@ intx_t ix8_x_mod_x(intx_t x, intx_t y)
  * Computes the remainder of the division of one big integer `x` by an int64 `y` (x % y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_x_mod_i(intx_t x, int64_t y)
+intx_t ix8_x_mod_i(const intx_t x, int64_t y)
 {
 	return ix8_x_mod_x(x, (intx_t) { (dig_t*)&y, INTEX8_DIGIT_COUNT_IN_64BITS });
 }
@@ -250,7 +242,7 @@ intx_t ix8_x_mod_i(intx_t x, int64_t y)
  * Computes the remainder of the division of an int64 `x` by a big integer `y` (x % y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_i_mod_x(int64_t x, intx_t y)
+intx_t ix8_i_mod_x(int64_t x, const intx_t y)
 {
 	return ix8_x_mod_x((intx_t) { (dig_t*)&x, INTEX8_DIGIT_COUNT_IN_64BITS }, y);
 }
@@ -259,9 +251,9 @@ intx_t ix8_i_mod_x(int64_t x, intx_t y)
  * Computes the negation of a big integer `x` (-x).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_negate(intx_t x)
+intx_t ix8_negate(const intx_t x)
 {
-	return _call_ix8_1param_interface_special(ix8_trim(x), i8_negate);
+	return _call_ix8_1param_interface_special(i8_trim(x), i8_negate);
 }
 
 /*
@@ -282,9 +274,9 @@ intx_t ix8_negate_self(intx_t x)
  * Computes the absolute value of a big integer `x` (|x|).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_abs(intx_t x)
+intx_t ix8_abs(const intx_t x)
 {
-	return _call_ix8_1param_interface_special(ix8_trim(x), i8_abs);
+	return _call_ix8_1param_interface_special(i8_trim(x), i8_abs);
 }
 
 /*
@@ -305,34 +297,34 @@ intx_t ix8_abs_self(intx_t x)
  * Performs bitwise AND operation on two big integers `x`, `y` and returns the result (x & y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_binary_and(intx_t x, intx_t y)
+intx_t ix8_binary_and(const intx_t x, const intx_t y)
 {
-	return _call_ix8_2param_interface(x, y, x.size, i8_binary_and);
+	return _call_ix8_2param_interface(x, y, _max(x.size, y.size), i8_binary_and);
 }
 
 /*
  * Performs bitwise OR operation on two big integers `x`, `y` and returns the result (x | y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_binary_or(intx_t x, intx_t y)
+intx_t ix8_binary_or(const intx_t x, const intx_t y)
 {
-	return _call_ix8_2param_interface(x, y, x.size, i8_binary_or);
+	return _call_ix8_2param_interface(x, y, _max(x.size, y.size), i8_binary_or);
 }
 
 /*
  * Performs bitwise XOR operation on two big integers `x`, `y` and returns the result (x ^ y).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_binary_xor(intx_t x, intx_t y)
+intx_t ix8_binary_xor(const intx_t x, const intx_t y)
 {
-	return _call_ix8_2param_interface(x, y, x.size, i8_binary_xor);
+	return _call_ix8_2param_interface(x, y, _max(x.size, y.size), i8_binary_xor);
 }
 
 /*
  * Computes the bitwise NOT of a big integer `x` (~x).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_binary_not(intx_t x)
+intx_t ix8_binary_not(const intx_t x)
 {
 	return _call_ix8_1param_interface(x, i8_binary_not);
 }
@@ -349,7 +341,7 @@ intx_t ix8_binary_not_self(intx_t x)
  * Performs a left bitwise shift operation on a big integer `x` and returns the result (x << bits).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_left_shift(intx_t x, size_t bits)
+intx_t ix8_left_shift(const intx_t x, size_t bits)
 {
 	return _call_ix8_bitwise_interface(x, bits, x.size, i8_left_shift);
 }
@@ -366,7 +358,7 @@ intx_t ix8_left_shift_self(intx_t x, size_t bits)
  * Performs a right bitwise shift operation on a big integer `x` and returns the result (x >> bits).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_right_shift(intx_t x, size_t bits)
+intx_t ix8_right_shift(const intx_t x, size_t bits)
 {
 	//if (x.size <= bits / INTEX8_DIGIT_BIT_WIDTH())
 	//	return intx_zero;
@@ -386,9 +378,9 @@ intx_t ix8_right_shift_self(intx_t x, size_t bits)
  * Converts a big integer to a string representation and returns the result (intx_t to ascii).
  * Caller is responsible for freeing the result using `ix8_free_string()`.
  */
-char* const ix8_to_string(intx_t x)
+char* const ix8_to_string(const intx_t xi)
 {
-	x = ix8_trim(x);
+	intx_t x = i8_trim(xi);
 
 	if (i8_is_zero(x)) {
 		char* const z = (char *)malloc(2);

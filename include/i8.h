@@ -14,12 +14,6 @@
 
 #include "intx.h"
 
-//----------------------------------------------------------------------------------------------------------
-/*
- * Initializes the i8 interface.
- */
-//int ix8_init();
-
 /*
  * Creates a copy of a big integer (`intx_t` instance).
  *
@@ -33,7 +27,7 @@
  *   - A new `intx_t` instance equal to `x`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_copy(intx_t x, dig_t* dest);
+intx_t i8_copy(const intx_t x, dig_t* dest);
 
 /*
  * Creates a big integer from an int64.
@@ -64,7 +58,7 @@ intx_t i8_from_int(int64_t x, dig_t* dest);
  *  Returns:
  *      - `x`, with its `size` field updated.
  */
-intx_t ix8_trim(intx_t x);
+intx_t i8_trim(const intx_t x);
 
 //----------------------------------------------------------------------------------------------------------
 // Arithmetic operations:
@@ -89,7 +83,7 @@ intx_t ix8_trim(intx_t x);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x + y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_x_add_x(intx_t x, intx_t y, dig_t* dest);
+intx_t i8_x_add_x(const intx_t x, const intx_t y, dig_t* dest);
 
 /*
  * Adds an int64 to a big integer.
@@ -105,7 +99,7 @@ intx_t i8_x_add_x(intx_t x, intx_t y, dig_t* dest);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x + y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_x_add_i(intx_t x, int64_t y, dig_t* dest);
+intx_t i8_x_add_i(const intx_t x, int64_t y, dig_t* dest);
 
 /*
  * Adds a big integer (`intx_t` instance) to another in place (`x += y`).
@@ -122,7 +116,7 @@ intx_t i8_x_add_i(intx_t x, int64_t y, dig_t* dest);
  *   - Caller is responsible for ensuring `x` has at least max(x.size, y.size) digits space to store the result.
  *   - Caller is responsible for an additional digit (e.g., due to carry), if the result requires.
  */
-intx_t i8_x_add_eq_x(intx_t x, intx_t y);
+intx_t i8_x_add_eq_x(intx_t x, const intx_t y);
 
 /*
  * Subtracts one big integer from another (`intx_t` instances).
@@ -138,7 +132,7 @@ intx_t i8_x_add_eq_x(intx_t x, intx_t y);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x - y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_x_sub_x(intx_t x, intx_t y, dig_t* dest);	// -
+intx_t i8_x_sub_x(const intx_t x, const intx_t y, dig_t* dest);	// -
 
 /*
  * Subtracts an int64 from a big integer.
@@ -154,7 +148,7 @@ intx_t i8_x_sub_x(intx_t x, intx_t y, dig_t* dest);	// -
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x - y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_x_sub_i(intx_t x, int64_t y, dig_t* dest);
+intx_t i8_x_sub_i(const intx_t x, int64_t y, dig_t* dest);
 
 /*
  * Subtracts a big integer from an int64.
@@ -170,7 +164,7 @@ intx_t i8_x_sub_i(intx_t x, int64_t y, dig_t* dest);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x - y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_i_sub_x(int64_t x, intx_t y, dig_t* dest);
+intx_t i8_i_sub_x(int64_t x, const intx_t y, dig_t* dest);
 
 /*
  * Subtracts a big integer (`intx_t` instance) from another in place (`x -= y`).
@@ -220,7 +214,7 @@ intx_t i8_x_sub_eq_i(intx_t x, int64_t y);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x * y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_x_mul_x(intx_t x, intx_t y, dig_t* dest);
+intx_t i8_x_mul_x(const intx_t x, const intx_t y, dig_t* dest);
 
 /*
  * Multiplies a big integer by an int64.
@@ -236,7 +230,7 @@ intx_t i8_x_mul_x(intx_t x, intx_t y, dig_t* dest);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x * y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_x_mul_i(intx_t x, int64_t y, dig_t* dest);
+intx_t i8_x_mul_i(const intx_t x, int64_t y, dig_t* dest);
 
 /*
  * Divides one big integer by another (`intx_t` instances).
@@ -256,7 +250,7 @@ intx_t i8_x_mul_i(intx_t x, int64_t y, dig_t* dest);
  *   - If `x` and `y` are positive, the following holds:
  *       `(-x) / y == -(x / y) == -(x / (-y)) == (-x) / (-y)`.
  */
-intx_t i8_x_div_x(intx_t x, intx_t y, dig_t* dest);
+intx_t i8_x_div_x(const intx_t x, const intx_t y, dig_t* dest);
 
 /*
  * Divides a big integer by an int64.
@@ -276,7 +270,7 @@ intx_t i8_x_div_x(intx_t x, intx_t y, dig_t* dest);
  *   - If `x` and `y` are positive, the following holds:
  *       `(-x) / y == -(x / y) == -(x / (-y)) == (-x) / (-y)`.
  */
-intx_t i8_x_div_i(intx_t x, int64_t y, dig_t* dest);
+intx_t i8_x_div_i(const intx_t x, int64_t y, dig_t* dest);
 
 /*
  * Divides an int64 by a big integer.
@@ -296,7 +290,7 @@ intx_t i8_x_div_i(intx_t x, int64_t y, dig_t* dest);
  *   - If `x` and `y` are positive, the following holds:
  *       `(-x) / y == -(x / y) == -(x / (-y)) == (-x) / (-y)`.
  */
-intx_t i8_i_div_x(int64_t x, intx_t y, dig_t* dest);
+intx_t i8_i_div_x(int64_t x, const intx_t y, dig_t* dest);
 
 /*
  * Computes the remainder of the division of one big integer by another (`intx_t` instances).
@@ -316,7 +310,7 @@ intx_t i8_i_div_x(int64_t x, intx_t y, dig_t* dest);
  *   - If `x` and `y` are positive, the following identity holds:
  *       `(-x) % y == -(x % y) == -(x % (-y)) == (-x) % (-y)`.
  */
-intx_t i8_x_mod_x(intx_t x, intx_t y, dig_t* dest);
+intx_t i8_x_mod_x(const intx_t x, const intx_t y, dig_t* dest);
 
 /*
  * Computes the remainder of the division of a big integer by an int64.
@@ -336,7 +330,7 @@ intx_t i8_x_mod_x(intx_t x, intx_t y, dig_t* dest);
  *   - If `x` and `y` are positive, the following identity holds:
  *       `(-x) % y == -(x % y) == -(x % (-y)) == (-x) % (-y)`.
  */
-intx_t i8_x_mod_i(intx_t x, int64_t y, dig_t* dest);
+intx_t i8_x_mod_i(const intx_t x, int64_t y, dig_t* dest);
 
 /*
  * Computes the remainder of the division of an int64 by a big integer.
@@ -356,7 +350,7 @@ intx_t i8_x_mod_i(intx_t x, int64_t y, dig_t* dest);
  *   - If `x` and `y` are positive, the following identity holds:
  *       `(-x) % y == -(x % y) == -(x % (-y)) == (-x) % (-y)`.
  */
-intx_t i8_i_mod_x(int64_t x, intx_t y, dig_t* dest);
+intx_t i8_i_mod_x(int64_t x, const intx_t y, dig_t* dest);
 
 /*
  * Computes the negation of a big integer (`intx_t` instance).
@@ -372,7 +366,7 @@ intx_t i8_i_mod_x(int64_t x, intx_t y, dig_t* dest);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `-x`.
  *   - Otherwise, returns `intx_zero`.
  */
-intx_t i8_negate(intx_t x, dig_t* dest);
+intx_t i8_negate(const intx_t x, dig_t* dest);
 
 /*
  * Negates a big integer (`intx_t` instance) in place.
@@ -405,7 +399,7 @@ intx_t i8_negate_self(intx_t x);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `|x|` (absolute value of `x`).
  *   - Otherwise, returns `intx_zero`.
  */
-intx_t i8_abs(intx_t x, dig_t* dest);
+intx_t i8_abs(const intx_t x, dig_t* dest);
 
 /*
  * Computes the absolute value of a big integer (`intx_t` instance) in place.
@@ -443,7 +437,7 @@ intx_t i8_abs_self(intx_t x);
  * Note:
  *   - Assumes x and y are trimmed
  */
-bool i8_is_equal(intx_t x, intx_t y);
+bool i8_is_equal(const intx_t x, const intx_t y);
 
 /*
  * Checks if a big integer (`intx_t` instance) is less than or equal to another.
@@ -459,7 +453,7 @@ bool i8_is_equal(intx_t x, intx_t y);
  * Note:
  *   - Assumes x and y are trimmed
  */
-bool i8_is_less_eq(intx_t x, intx_t y);
+bool i8_is_less_eq(const intx_t x, const intx_t y);
 
 /*
  * Checks if a big integer (`intx_t` instance) is greater than or equal to another.
@@ -475,7 +469,7 @@ bool i8_is_less_eq(intx_t x, intx_t y);
  * Note:
  *   - Assumes x and y are trimmed
  */
-inline bool i8_is_greater_eq(intx_t x, intx_t y) { return i8_is_less_eq(y, x); }
+inline bool i8_is_greater_eq(const intx_t x, const intx_t y) { return i8_is_less_eq(y, x); }
 
 /*
  * Checks if a big integer (`intx_t` instance) is less than another.
@@ -491,7 +485,7 @@ inline bool i8_is_greater_eq(intx_t x, intx_t y) { return i8_is_less_eq(y, x); }
  * Note:
  *   - Assumes x and y are trimmed
  */
-inline bool i8_is_less(intx_t x, intx_t y) { return !i8_is_less_eq(y, x); }
+inline bool i8_is_less(const intx_t x, const intx_t y) { return !i8_is_less_eq(y, x); }
 
 /*
  * Checks if a big integer (`intx_t` instance) is greater than another.
@@ -507,7 +501,7 @@ inline bool i8_is_less(intx_t x, intx_t y) { return !i8_is_less_eq(y, x); }
  * Note:
  *   - Assumes x and y are trimmed
  */
-inline bool i8_is_greater(intx_t x, intx_t y) { return !i8_is_less_eq(x, y); }
+inline bool i8_is_greater(const intx_t x, const intx_t y) { return !i8_is_less_eq(x, y); }
 
 /*
  * Checks if a big integer (`intx_t` instance) is zero.
@@ -519,7 +513,7 @@ inline bool i8_is_greater(intx_t x, intx_t y) { return !i8_is_less_eq(x, y); }
  *   - `true` if `x == 0`.
  *   - `false` otherwise.
  */
-bool i8_is_zero(intx_t x);
+bool i8_is_zero(const intx_t x);
 
 /*
  * Checks if a big integer (`intx_t` instance) is positive.
@@ -531,7 +525,7 @@ bool i8_is_zero(intx_t x);
  *   - `true` if `x > 0`.
  *   - `false` otherwise.
  */
-bool i8_is_positive(intx_t x);
+bool i8_is_positive(const intx_t x);
 
 /*
  * Checks if a big integer (`intx_t` instance) is negative.
@@ -543,7 +537,7 @@ bool i8_is_positive(intx_t x);
  *   - `true` if `x < 0`.
  *   - `false` otherwise.
  */
-bool i8_is_negative(intx_t x);
+bool i8_is_negative(const intx_t x);
 
 // NEW FUNCTION
 /*
@@ -556,7 +550,7 @@ bool i8_is_negative(intx_t x);
  *   - `true` if `x` is an Extreme Positive
  *   - Otherwise `false`.
  */
-bool i8_is_max_positive(intx_t x);
+bool i8_is_max_positive(const intx_t x);
 
 /*
  * Checks if a big integer is an Extreme Negative (i.e. ONLY highest bit of x is set).
@@ -568,7 +562,7 @@ bool i8_is_max_positive(intx_t x);
  *   - `true` if `x` is an Extreme Negative
  *   - Otherwise `false`.
  */
-bool i8_is_min_negative(intx_t x);
+bool i8_is_min_negative(const intx_t x);
 
 /*
  * Checks if a big integer is of the form `pow(2, n)` or `-pow(2, n)`, for some non-negative integer `n`.
@@ -580,7 +574,7 @@ bool i8_is_min_negative(intx_t x);
  *   - `n + 1` if `x == pow(2, n)`; `-(n + 1)` if `x == -pow(2, n)`;
  *   - Otherwise `0`.
  */
-int64_t i8_is_pow2(intx_t x);
+int64_t i8_is_pow2(const intx_t x);
 
 //----------------------------------------------------------------------------------------------------------
 // Binary operations:
@@ -606,7 +600,7 @@ int64_t i8_is_pow2(intx_t x);
  *   - As per standard behavior, positive integers are extended beyond the highest bit with `0` bits,
  *     while negative integers are extended with `1` bits.
  */
-intx_t i8_binary_and(intx_t x, intx_t y, dig_t* dest);
+intx_t i8_binary_and(const intx_t x, const intx_t y, dig_t* dest);
 
 /*
  * Performs bitwise OR operation on two big integers (`intx_t` instances).
@@ -627,7 +621,7 @@ intx_t i8_binary_and(intx_t x, intx_t y, dig_t* dest);
  *   - As per standard behavior, positive integers are extended beyond the highest bit with `0` bits,
  *     while negative integers are extended with `1` bits.
  */
-intx_t i8_binary_or(intx_t x, intx_t y, dig_t* dest);
+intx_t i8_binary_or(const intx_t x, const intx_t y, dig_t* dest);
 
 /*
  * Performs bitwise XOR operation on two big integers (`intx_t` instances).
@@ -648,7 +642,7 @@ intx_t i8_binary_or(intx_t x, intx_t y, dig_t* dest);
  *   - As per standard behavior, positive integers are extended beyond the highest bit with `0` bits,
  *     while negative integers are extended with `1` bits.
  */
-intx_t i8_binary_xor(intx_t x, intx_t y, dig_t* dest);
+intx_t i8_binary_xor(const intx_t x, const intx_t y, dig_t* dest);
 
 /*
  * Computes the bitwise NOT of a big integer (`intx_t` instance).
@@ -663,7 +657,7 @@ intx_t i8_binary_xor(intx_t x, intx_t y, dig_t* dest);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `~x`.
  *   - Otherwise, returns `intx_zero`.
  */
-intx_t i8_binary_not(intx_t x, dig_t* dest);
+intx_t i8_binary_not(const intx_t x, dig_t* dest);
 
 /*
  * Computes the bitwise NOT of a big integer (`intx_t` instance) in place.
@@ -694,7 +688,7 @@ intx_t i8_binary_not_self(intx_t x);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing the left-shifted value of `x`.
  *   - Otherwise, returns `intx_zero`.
  */
-intx_t i8_left_shift(intx_t x, size_t bits, dig_t* dest);
+intx_t i8_left_shift(const intx_t x, size_t bits, dig_t* dest);
 
 /*
  * Performs a left bitwise shift operation on a big integer (`intx_t` instance) in place.
@@ -723,7 +717,7 @@ intx_t i8_left_shift_self(intx_t x, size_t bits);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing the right-shifted value of `x`.
  *   - Otherwise, returns `intx_zero`.
  */
-intx_t i8_right_shift(intx_t x, size_t bits, dig_t* dest);
+intx_t i8_right_shift(const intx_t x, size_t bits, dig_t* dest);
 
 /*
  * Performs a right bitwise shift operation on a big integer (`intx_t` instance) in place.
