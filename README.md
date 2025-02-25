@@ -1,3 +1,5 @@
+![Build Status](https://github.com/mokazemimo/intEx8/actions/workflows/main.yml/badge.svg)
+
 <p align="center">
   <img src="Logo.jpg" alt="intEx8 Logo" width="350">
 </p>
