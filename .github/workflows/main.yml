@@ -1,0 +1,24 @@
+name: Build and Test intEx8
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Build Tools
+        run: sudo apt update && sudo apt install -y gcc make
+
+      - name: Compile intEx8
+        run: |
+          cd src
+          make  # Adjust if you use a different build system
+
+      - name: Run Tests
+        run: |
+          cd tests
+          ./test_intex8  # Adjust if you have a different test command
