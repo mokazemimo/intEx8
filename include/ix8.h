@@ -6,7 +6,7 @@
  *
  *  Author: Moham KazemiMoghaddam
  *  Created: 13-Jan-2025
- *  License: GNU General Public License v3.0
+ *  License: GNU General Public License v3.0 (GPL-3.0)
  */
 
 #ifndef __intex8_IX8_H__
@@ -40,8 +40,10 @@ intx_t ix8_copy(const intx_t x);
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t ix8_from_int(int64_t x);
+intx_t ix8_copy_i(int64_t x);
 
+//---------------------------------------------------------------------------------------------------
+// Arithmetic
 /*
  * Adds two big integers (`intx_t` instances).
  * 
@@ -54,7 +56,7 @@ intx_t ix8_from_int(int64_t x);
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t ix8_x_add_x(const intx_t x, const intx_t y);
+intx_t ix8_add(const intx_t x, const intx_t y);
 
 /*
  * Adds an int64 to a big integer.
@@ -68,7 +70,35 @@ intx_t ix8_x_add_x(const intx_t x, const intx_t y);
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t ix8_x_add_i(const intx_t x, int64_t y);
+intx_t ix8_add_i(const intx_t x, int64_t y);
+
+/*
+ * Adds a big integer (`intx_t` instance) to another in place (`x += y`).
+ *
+ * Parameters:
+ *   - x: Big integer to be modified.
+ *   - y: Big integer to be added to `x`.
+ *
+ * Returns:
+ *   - If `ix8_errno` is `INTEX8_OK`, `x` is updated with the sum `x + y` and returned.
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - Otherwise, x is not modified ?????????
+ */
+void ix8_addeq(intx_t *x, intx_t y);	// x += y
+
+/*
+ * Adds an int64 to a big integer in place (`x += y`).
+ *
+ * Parameters:
+ *   - x: Big integer to be modified.
+ *   - y: Int64 to be added to `x`.
+ *
+ * Returns:
+ *   - If `ix8_errno` is `INTEX8_OK`, `x` is updated with the sum `x + y` and returned.
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - Otherwise, x is not modified ?????????.
+ */
+void ix8_addeq_i(intx_t *x, int64_t y);
 
 /*
  * Subtracts one big integer from another (`intx_t` instances).
@@ -82,7 +112,7 @@ intx_t ix8_x_add_i(const intx_t x, int64_t y);
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t ix8_x_sub_x(const intx_t x, const intx_t y);
+intx_t ix8_sub(const intx_t x, const intx_t y);
 
 /*
  * Subtracts an int64 from a big integer.
@@ -96,7 +126,7 @@ intx_t ix8_x_sub_x(const intx_t x, const intx_t y);
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t ix8_x_sub_i(const intx_t x, int64_t y);
+intx_t ix8_sub_i(const intx_t x, int64_t y);
 
 /*
  * Subtracts a big integer from an int64.
@@ -110,7 +140,29 @@ intx_t ix8_x_sub_i(const intx_t x, int64_t y);
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t ix8_i_sub_x(int64_t x, const intx_t y);
+intx_t ix8_i_sub(int64_t x, const intx_t y);
+
+/*
+ * Subtracts one big integer from another in place (`*x -= y`).
+ *
+ * Parameters:
+ *   - x: Pointer to the minuend (big integer to subtract from) which will be updated if function is successful.
+ *        If `intEx8_errno` is `INTEX8_OK`, *x will be updated to `*x - y`.
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - y: The subtrahend (big integer to subtract).
+ */
+void ix8_subeq(intx_t *x, const intx_t y);
+
+/*
+ * Subtracts an int64 from a big integer in place (`*x -= y`).
+ *
+ * Parameters:
+ *   - x: Pointer to the minuend (big integer to subtract from) which will be updated if function is successful.
+ *        If `intEx8_errno` is `INTEX8_OK`, *x will be updated to `*x - y`.
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - y: The subtrahend (big integer to subtract).
+ */
+void ix8_subeq_i(intx_t *x, int64_t y);
 
 /*
  * Multiplies two big integers (`intx_t` instances).
@@ -124,7 +176,7 @@ intx_t ix8_i_sub_x(int64_t x, const intx_t y);
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t ix8_x_mul_x(const intx_t x, const intx_t y);
+intx_t ix8_mul(const intx_t x, const intx_t y);
 
 /*
  * Multiplies one big integer to an int64.
@@ -138,7 +190,63 @@ intx_t ix8_x_mul_x(const intx_t x, const intx_t y);
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t ix8_x_mul_i(const intx_t x, int64_t y);
+intx_t ix8_mul_i(const intx_t x, int64_t y);
+
+/*
+ * Multiplies one big integer to `sgn(y)*2^|y|`.
+ *
+ * Parameters:
+ *   - x: The big integer.
+ *   - y: The int64.
+ *
+ * Returns:
+ *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x * y`.
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - Otherwise, `intx_zero`.
+ */
+intx_t ix8_mul_p2(intx_t x, int64_t y);
+
+/*
+ * Multiplies a big integer by another big integer in place (`*x *= y`).
+ *
+ * Parameters:
+ *   - x: Pointer to big integer which will be modified (multiplied by).
+ *   - y: The big integer (multiplier).
+ *
+ * Returns:
+ *   - If `intEx8_errno` is `INTEX8_OK`, *x will be updated to `*x * y`.
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - Otherwise, `intx_zero`.
+ */
+void ix8_muleq(intx_t *x, intx_t y);
+
+/*
+ * Multiplies a big integer by an int64 in place (`*x *= y`).
+ *
+ * Parameters:
+ *   - x: Pointer to big integer which will be modified (multiplied by).
+ *   - y: int64 multiplier.
+ *
+ * Returns:
+ *   - If `intEx8_errno` is `INTEX8_OK`, *x will be updated to `*x * y`.
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - Otherwise, `intx_zero`.
+ */
+void ix8_muleq_i(intx_t *x, int64_t y);
+
+/*
+ * Multiplies a big integer by a power-of-two in place (`*x *= sgn(y) * 2^|y|`).
+ *
+ * Parameters:
+ *   - x: Pointer to big integer which will be modified (multiplied by).
+ *   - y: int64 which contains sign and 2's power (multiplier).
+ *
+ * Returns:
+ *   - If `intEx8_errno` is `INTEX8_OK`, *x will be updated to `*x * (sgn(y) * 2^|y|)`.
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - Otherwise, `intx_zero`.
+ */
+void ix8_muleq_p2(intx_t *x, int64_t y);
 
 /*
  * Divides one big integer by another (`intx_t` instances).
@@ -151,12 +259,8 @@ intx_t ix8_x_mul_i(const intx_t x, int64_t y);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x / y` (quotient of the division).
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, `intx_zero`.
- *
- * Notes:
- *   - If `x` and `y` are positive, the following holds:
- *       `(-x) / y == -(x / y) == -(x / (-y)) == (-x) / (-y)`.
  */
-intx_t ix8_x_div_x(const intx_t x, const intx_t y);
+intx_t ix8_div(const intx_t x, const intx_t y);
 
 /*
  * Divides one big integer by an int64_t.
@@ -169,12 +273,8 @@ intx_t ix8_x_div_x(const intx_t x, const intx_t y);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x / y` (quotient of the division).
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, `intx_zero`.
- *
- * Notes:
- *   - If `x` and `y` are positive, the following holds:
- *       `(-x) / y == -(x / y) == -(x / (-y)) == (-x) / (-y)`.
  */
-intx_t ix8_x_div_i(const intx_t x, int64_t y);
+intx_t ix8_div_i(const intx_t x, int64_t y);
 
 /*
  * Divides an int64_t by a big integer.
@@ -187,12 +287,77 @@ intx_t ix8_x_div_i(const intx_t x, int64_t y);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x / y` (quotient of the division).
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, `intx_zero`.
+ */
+int64_t ix8_i_div(int64_t x, const intx_t yi);
+
+/*
+ * Divides one big integer by a power-of-two sgn(y)*2^|y| (`*x / (sgn(y)*2^|y|)`).
+ *
+ * Parameters:
+ *   - x: Pointer to dividend (big integer to be divided).
+ *   - y: The power-of-two (to divide by).
+ *
+ * Returns:
+ *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `*x / (sgn(y)*2^|y|)` (quotient of the division).
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - Otherwise, *x will not be modified.
+ */
+intx_t ix8_div_p2(intx_t x, int64_t y);
+
+/*
+ * Divides one big integer by another in place (`*x /= y`).
+ *
+ * Parameters:
+ *   - x: Pointer to dividend (big integer to be divided).
+ *   - y: The divisor (big integer to divide by).
  *
  * Notes:
- *   - If `x` and `y` are positive, the following holds:
- *       `(-x) / y == -(x / y) == -(x / (-y)) == (-x) / (-y)`.
+ *   - If `intEx8_errno` is `INTEX8_OK`, updates *x to `*x / y` (quotient of the division).
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - Otherwise, *x will not be modified.
  */
-intx_t ix8_i_div_x(int64_t x, const intx_t y);
+void ix8_diveq(intx_t *x, intx_t y);
+
+/*
+ * Divides one big integer by an int64 in place (`*x /= y`).
+ *
+ * Parameters:
+ *   - x: Pointer to dividend (big integer to be divided).
+ *   - y: The divisor (int64 to divide by).
+ *
+ * Notes:
+ *   - If `intEx8_errno` is `INTEX8_OK`, updates *x to `*x / y` (quotient of the division).
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - Otherwise, *x will not be modified.
+ */
+void ix8_diveq_i(intx_t *x, int64_t y);
+
+/*
+ * Divides an int64 by a big integer in place (`*x /= y`).
+ *
+ * Parameters:
+ *   - x: Pointer to dividend (int64 to be divided).
+ *   - y: The divisor (big integer to divide by).
+ *
+ * Notes:
+ *   - If `intEx8_errno` is `INTEX8_OK`, updates *x to `*x / y` (quotient of the division).
+ *   - Otherwise, *x will not be modified.
+ */
+void ix8_i_diveq(int64_t* x, const intx_t yi);
+
+/*
+ * Divides one big integer by a power-of-two sgn(y)*2^|y| in place (`*x /= (sgn(y)*2^|y|)`).
+ *
+ * Parameters:
+ *   - x: Pointer to dividend (big integer to be divided).
+ *   - y: The power-of-two (to divide by).
+ *
+ * Notes:
+ *   - If `intEx8_errno` is `INTEX8_OK`, updates *x to `*x / (sgn(y)*2^|y|)` (quotient of the division).
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - Otherwise, *x will not be modified.
+ */
+void ix8_diveq_p2(intx_t *x, int64_t y);
 
 /*
  * Computes the remainder of the division of one big integer by another (`intx_t` instances).
@@ -211,7 +376,7 @@ intx_t ix8_i_div_x(int64_t x, const intx_t y);
  *   - If `x` and `y` are positive, the following identity holds:
  *       `(-x) % y == -(x % y) == -(x % (-y)) == (-x) % (-y)`.
  */
-intx_t ix8_x_mod_x(const intx_t x, const intx_t y);
+intx_t ix8_mod(const intx_t x, const intx_t y);
 
 /*
  * Computes the remainder of the division of a big integer by an int64.
@@ -221,16 +386,14 @@ intx_t ix8_x_mod_x(const intx_t x, const intx_t y);
  *   - y: The divisor (int64 to divide by).
  *
  * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x % y` (the remainder of `x / y`).
- *     Caller is responsible for freeing it using `ix8_free()`.
- *   - Otherwise, returns `intx_zero`.
+ *   - If `intEx8_errno` is `INTEX8_OK`, an int64 representing `x % y` (the remainder of `x / y`).
+ *   - Otherwise, returns 0.
  *
  * Notes:
- *   - Allocates y.size digits of memory for return value.
  *   - If `x` and `y` are positive, the following identity holds:
  *       `(-x) % y == -(x % y) == -(x % (-y)) == (-x) % (-y)`.
  */
-intx_t ix8_x_mod_i(const intx_t x, int64_t y);
+int64_t ix8_mod_i(const intx_t x, int64_t y);
 
 /*
  * Computes the remainder of the division of an int64 by a big integer.
@@ -240,16 +403,99 @@ intx_t ix8_x_mod_i(const intx_t x, int64_t y);
  *   - y: The divisor (intx to divide by).
  *
  * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x % y` (the remainder of `x / y`).
+ *   - If `intEx8_errno` is `INTEX8_OK`, an int64 representing `x % y` (the remainder of `x / y`).
+ *   - Otherwise, returns 0.
+ *
+ * Notes:
+ *   - If `x` and `y` are positive, the following identity holds:
+ *       `(-x) % y == -(x % y) == -(x % (-y)) == (-x) % (-y)`.
+ */
+int64_t ix8_i_mod(int64_t x, const intx_t y);
+
+/*
+ * Computes the remainder of the division of a big integer by 2^|y|.
+ *
+ * Parameters:
+ *   - x: The dividend (int64 to be divided).
+ *   - y: The power of two (to divide by).
+ *
+ * Returns:
+ *   - If `intEx8_errno` is `INTEX8_OK`, a big integer representing `x % (2^|y|)` (the remainder of `x / (2^|y|)`).
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, returns `intx_zero`.
  *
  * Notes:
- *   - Allocates y.size digits of memory for return value.
+ *   - The following identities hold:
+ *       ix8_mod_p2(x, -y) = ix8_mod_p2(x, y).
+ *       ix8_mod_p2(-x, y) = -ix8_mod_p2(x, y).
+ */
+intx_t ix8_mod_p2(intx_t x, int64_t y);
+
+/*
+ * Computes the remainder of the division of one big integer by another in place (x %= y).
+ *
+ * Parameters:
+ *   - x: The dividend (big integer to be divided).
+ *   - y: The divisor (big integer to divide by).
+ *
+ * Returns:
+ *   - If `intEx8_errno` is `INTEX8_OK`, updated `intx_t` instance representing `x % y` (the remainder of `x / y`).
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - Otherwise, updates x to `intx_zero`.
+ *
+ * Notes:
  *   - If `x` and `y` are positive, the following identity holds:
  *       `(-x) % y == -(x % y) == -(x % (-y)) == (-x) % (-y)`.
  */
-intx_t ix8_i_mod_x(int64_t x, const intx_t y);
+#define ix8_modeq(x, y)			(*(x) = i8_mod(i8_trim(*(x)), i8_trim(y), NULL))
+
+/*
+ * Computes the remainder of the division of a big integer by 2^|y| in place (`x %= 2^|y|`).
+ *
+ * Parameters:
+ *   - x: The dividend (int64 to be divided).
+ *   - y: The power of two (to divide by).
+ *
+ * Returns:
+ *   - If `intEx8_errno` is `INTEX8_OK`, updates x to `x % (2^|y|)` (the remainder of `x / (2^|y|)`).
+ *     Caller is responsible for freeing it using `ix8_free()`.
+ *   - Otherwise, returns `intx_zero`.
+ *
+ * Notes:
+ *   - The following identities hold:
+ *       ix8_mod_p2(x, -y) = ix8_mod_p2(x, y).
+ *       ix8_mod_p2(-x, y) = -ix8_mod_p2(x, y).
+ */
+#define ix8_modeq_p2(x, y)		(*(x) = i8_mod_p2(i8_trim(*(x)), y, NULL))
+
+/*
+ * Computes the remainder of the division of a big integer by a 64-bit integer in place (`*x %= y`).
+ *
+ * Parameters:
+ *   - x: Pointer to the dividend (big integer to be updated).
+ *   - y: The divisor (int64 to divide by).
+ *
+ * Notes:
+ *   - After execution, `*x` contains the result of `*x % y`.
+ *   - The function ensures that `*x` is properly updated without memory leaks.
+ *   - If `y` is positive, the following identity holds:
+ *       `(-x) % y == -(x % y) == (-x) % (-y) == -(x % (-y))`
+ */
+void ix8_modeq_i(intx_t* xi, int64_t y);
+
+/*
+ * Computes the remainder of the division of an int64 by a big integer in place (`*x %= y`).
+ *
+ * Parameters:
+ *   - x: Pointer to dividend (int64 to be updated).
+ *   - y: The divisor (big integer to divide by).
+ *
+ * Notes:
+ *   - After execution, `*x` contains the result of `*x % y`.
+ *   - If `y` is positive, the following identity holds:
+ *       `(-(*x)) % y == -((*x) % y)`
+ */
+void ix8_i_modeq(int64_t* x, intx_t y);
 
 /*
  * Computes the negation of a big integer (`intx_t` instance).
@@ -264,199 +510,22 @@ intx_t ix8_i_mod_x(int64_t x, const intx_t y);
  */
 intx_t ix8_negate(const intx_t x);
 
-/*
- * Negates a big integer (`intx_t` instance) in place.
- *
- * Parameters:
- *   - x: Big integer to be negated.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, the negated `x` in place.
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - This function modifies `x` in place and does not create a new instance.
- *   - If `x` represents an Extreme Negative value (i.e., ONLY the highest bit is set),
- *     negation requires an additional digit to store the result. This case will result
- *     in `INTEX8_ERR_CANNOT_NEGATE_EXTREME_NEGATIVE`
- */
-intx_t ix8_negate_self(intx_t x);
+#define ix8_negate_me		i8_negate_me
 
 /*
  * Computes the absolute value of a big integer (`intx_t` instance).
  *
  * Parameters:
- *   - x: Big integer whose absolute value is to be computed.
+ *   - x: Big integer to negate.
  *
  * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `|x|` (absolute value of `x`).
+ *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `|x|`.
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, returns `intx_zero`.
  */
 intx_t ix8_abs(const intx_t x);
 
-/*
- * Computes the absolute value of a big integer (`intx_t` instance) in place.
- *
- * Parameters:
- *   - x: Big integer to be modified to its absolute value.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, `x` converted to its absolute value (`|x|`).
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - This function modifies `x` in place and does not create a new instance.
- *   - If `x` represents an Extreme Negative value (i.e., ONLY the highest bit is set),
- *     negation requires an additional digit to store the result. This case will result
- *     in `INTEX8_ERR_CANNOT_NEGATE_EXTREME_NEGATIVE`.
- */
-intx_t ix8_abs_self(intx_t x);
-
-/*
- * Performs bitwise AND operation on two big integers (`intx_t` instances).
- *
- * Parameters:
- *   - x: The first big integer.
- *   - y: The second big integer.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x & y`.
- *     Caller is responsible for freeing it using `ix8_free()`.
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - The result will have a `size` equal to the maximum `size` of the input arguments.
- *   - As per standard behavior, positive integers are extended beyond the highest digit with `0` bits,
- *     while negative integers are extended with `1` bits.
- */
-intx_t ix8_binary_and(const intx_t x, const intx_t y);
-
-/*
- * Performs bitwise OR operation on two big integers (`intx_t` instances).
- *
- * Parameters:
- *   - x: The first big integer.
- *   - y: The second big integer.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x | y`.
- *     Caller is responsible for freeing it using `ix8_free()`.
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - The result will have a `size` equal to the maximum `size` of the input arguments.
- *   - As per standard behavior, positive integers are extended beyond the highest digit with `0` bits,
- *     while negative integers are extended with `1` bits.
- */
-intx_t ix8_binary_or(const intx_t x, const intx_t y);
-
-/*
- * Performs bitwise XOR operation on two big integers (`intx_t` instances).
- *
- * Parameters:
- *   - x: The first big integer.
- *   - y: The second big integer.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x ^ y`.
- *     Caller is responsible for freeing it using `ix8_free()`.
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - The result will have a `size` equal to the maximum `size` of the input arguments.
- *   - As per standard behavior, positive integers are extended beyond the highest digit with `0` bits,
- *     while negative integers are extended with `1` bits.
- */
-intx_t ix8_binary_xor(const intx_t x, const intx_t y);
-
-/*
- * Computes the bitwise NOT of a big integer (`intx_t` instance).
- *
- * Parameters:
- *   - x: Big integer to be negated bitwise.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `~x`.
- *     Caller is responsible for freeing it using `ix8_free()`.
- *   - Otherwise, returns `intx_zero`.
- */
-intx_t ix8_binary_not(const intx_t x);
-
-/*
- * Computes the bitwise NOT of a big integer (`intx_t` instance) in place.
- *
- * Parameters:
- *   - x: Big integer to be modified to its bitwise complement.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, `x` after applying bitwise NOT (`~x`).
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - This function modifies `x` in place and does not create a new instance.
- */
-intx_t ix8_binary_not_self(intx_t x);
-
-/*
- * Performs a left bitwise shift operation on a big integer (`intx_t` instance).
- *
- * Parameters:
- *   - x: Big integer to be shifted.
- *   - bits: Number of bits to shift.
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for (x.size) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing the left-shifted value of `x`.
- *     Caller is responsible for freeing it using `ix8_free()`.
- *   - Otherwise, returns `intx_zero`.
- */
-intx_t ix8_left_shift(const intx_t x, size_t bits);
-
-/*
- * Performs a left bitwise shift operation on a big integer (`intx_t` instance) in place.
- *
- * Parameters:
- *   - x: Big integer to be shifted.
- *   - bits: Number of bits to shift.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, the left-shifted value of `x` is stored in place.
- *   - Otherwise, returns `intx_zero`.
- */
-intx_t ix8_left_shift_self(intx_t x, size_t bits);
-
-/*
- * Performs a right bitwise shift operation on a big integer (`intx_t` instance).
- *
- * Parameters:
- *   - x: Big integer to be shifted.
- *   - bits: Number of bits to shift.
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for (x.size - bits / INTEX8_DIGIT_BIT_WIDTH()) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing the right-shifted value of `x`.
- *     Caller is responsible for freeing it using `ix8_free()`.
- *   - Otherwise, returns `intx_zero`.
- */
-intx_t ix8_right_shift(const intx_t x, size_t bits);
-
-/*
- * Performs a right bitwise shift operation on a big integer (`intx_t` instance) in place.
- *
- * Parameters:
- *   - x: Big integer to be shifted.
- *   - bits: Number of bits to shift.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, the right-shifted value of `x` is stored in place.
- *   - Otherwise, returns `intx_zero`.
- */
-intx_t ix8_right_shift_self(intx_t x, size_t bits);
+#define ix8_abs_me		i8_abs_me
 
 // Comparison operators
 /*
@@ -470,7 +539,7 @@ intx_t ix8_right_shift_self(intx_t x, size_t bits);
  *   - `true` if `x` is equal to `y`.
  *   - `false` otherwise.
  */
-inline bool ix8_is_equal(const intx_t x, const intx_t y) { return i8_is_equal(i8_trim(x), i8_trim(y)); }
+#define ix8_eq(x, y)		(true == i8_eq(i8_trim(x), i8_trim(y)))
 
 /*
  * Checks if a big integer (`intx_t` instance) is less than or equal to another.
@@ -483,7 +552,7 @@ inline bool ix8_is_equal(const intx_t x, const intx_t y) { return i8_is_equal(i8
  *   - `true` if `x <= y`.
  *   - `false` otherwise.
  */
-inline bool ix8_is_less_eq(const intx_t x, const intx_t y) { return i8_is_less_eq(i8_trim(x), i8_trim(y)); }
+#define ix8_le(x, y)		(true == i8_le(i8_trim(x), i8_trim(y)))
 
 /*
  * Checks if a big integer (`intx_t` instance) is greater than or equal to another.
@@ -496,7 +565,7 @@ inline bool ix8_is_less_eq(const intx_t x, const intx_t y) { return i8_is_less_e
  *   - `true` if `x >= y`.
  *   - `false` otherwise.
  */
-inline bool ix8_is_greater_eq(const intx_t x, const intx_t y) { return ix8_is_less_eq(y, x); }
+#define ix8_ge(x, y)		(true == ix8_le(y, x))
 
 /*
  * Checks if a big integer (`intx_t` instance) is less than another.
@@ -509,7 +578,7 @@ inline bool ix8_is_greater_eq(const intx_t x, const intx_t y) { return ix8_is_le
  *   - `true` if `x < y`.
  *   - `false` otherwise.
  */
-inline bool ix8_is_less(const intx_t x, const intx_t y) { return !ix8_is_less_eq(y, x); }
+#define ix8_lt(x, y)		(false == ix8_le(y, x))
 
 /*
  * Checks if a big integer (`intx_t` instance) is greater than another.
@@ -522,7 +591,7 @@ inline bool ix8_is_less(const intx_t x, const intx_t y) { return !ix8_is_less_eq
  *   - `true` if `x > y`.
  *   - `false` otherwise.
  */
-inline bool ix8_is_greater(const intx_t x, const intx_t y) { return !ix8_is_less_eq(x, y); }
+#define ix8_gt(x, y)		(false == ix8_le(x, y))
 
 /*
  * Checks if a big integer (`intx_t` instance) is zero.
@@ -534,10 +603,10 @@ inline bool ix8_is_greater(const intx_t x, const intx_t y) { return !ix8_is_less
  *   - `true` if `x == 0`.
  *   - `false` otherwise.
  */
-inline bool ix8_is_zero(const intx_t x) { return i8_is_zero(i8_trim(x)); }
+#define ix8_is_zero(x)		(true == i8_is_zero(i8_trim(x)))
 
 /*
- * Checks if a big integer (`intx_t` instance) is positive.
+ * Checks if a big integer is positive.
  *
  * Parameters:
  *   - x: Big integer to check.
@@ -546,10 +615,10 @@ inline bool ix8_is_zero(const intx_t x) { return i8_is_zero(i8_trim(x)); }
  *   - `true` if `x > 0`.
  *   - `false` otherwise.
  */
-inline bool ix8_is_positive(const intx_t x) { return i8_is_positive(i8_trim(x)); }
+#define ix8_gt_zero(x)		(true == i8_gt_zero(i8_trim(x)))
 
 /*
- * Checks if a big integer (`intx_t` instance) is negative.
+ * Checks if a big integer is negative.
  *
  * Parameters:
  *   - x: Big integer to check.
@@ -558,7 +627,72 @@ inline bool ix8_is_positive(const intx_t x) { return i8_is_positive(i8_trim(x));
  *   - `true` if `x < 0`.
  *   - `false` otherwise.
  */
-inline bool ix8_is_negative(const intx_t x) { return i8_is_negative(i8_trim(x)); }
+#define ix8_lt_zero(x)		(true == i8_lt_zero(i8_trim(x)))
+
+/*
+ * Checks if a big integer is equal to an int64.
+ *
+ * Parameters:
+ *   - x: The big integer.
+ *   - y: The int64.
+ *
+ * Returns:
+ *   - `true` if `x == y`.
+ *   - `false` otherwise.
+ */
+#define ix8_eq_i(x, y)		i8_eq_i(i8_trim(x), y)
+
+/*
+ * Checks if a big integer is less than or equal to an int64.
+ *
+ * Parameters:
+ *   - x: The big integer.
+ *   - y: The int64.
+ *
+ * Returns:
+ *   - `true` if `x <= y`.
+ *   - `false` otherwise.
+ */
+#define ix8_le_i(x, y)		i8_le_i(i8_trim(x), y)
+
+/*
+ * Checks if a big integer is less than an int64.
+ *
+ * Parameters:
+ *   - x: The big integer.
+ *   - y: The int64.
+ *
+ * Returns:
+ *   - `true` if `x < y`.
+ *   - `false` otherwise.
+ */
+#define ix8_lt_i(x, y)		i8_lt_i(i8_trim(x), y)
+
+/*
+ * Checks if a big integer is greater than or equal to an int64.
+ *
+ * Parameters:
+ *   - x: The big integer.
+ *   - y: The int64.
+ *
+ * Returns:
+ *   - `true` if `x >= y`.
+ *   - `false` otherwise.
+ */
+#define ix8_ge_i(x, y)		i8_ge_i(i8_trim(x), y)
+
+/*
+ * Checks if a big integer is greater than an int64.
+ *
+ * Parameters:
+ *   - x: The big integer.
+ *   - y: The int64.
+ *
+ * Returns:
+ *   - `true` if `x > y`.
+ *   - `false` otherwise.
+ */
+#define ix8_gt_i(x, y)		i8_gt_i(i8_trim(x), y)
 
 /*
  * Frees the memory allocated for a big integer (`intx_t` instance).
@@ -567,25 +701,27 @@ inline bool ix8_is_negative(const intx_t x) { return i8_is_negative(i8_trim(x));
  *   - x: Big integer to be freed.
  *
  * Notes:
- *   - This function must only be used for instances returned by `intex8_*` functions
- *     that allocate memory (e.g., `ix8_x_add_x()`, `ix8_x_mul_x()`, etc.).
+ *   - This function must only be used for instances returned by `ix8_*` functions
+ *     that allocate memory (e.g., `ix8_add()`, `ix8_mul()`, etc.).
  *   - If `x` is `intx_zero` or has a `NULL` pointer, the function does nothing.
  */
-inline void ix8_free(intx_t x) { free(x.ptr); }
+#define ix8_free(x)		free((x).ptr)
 
+//---------------------------------------------------------------------------------------------------
 // String conversion
 /*
  * Converts a big integer (`intx_t` instance) to a string representation.
  *
  * Parameters:
  *   - x: Big integer to convert.
+ *   - fptr: if a non-NULL pointer is passed, returns the pointer which should be freed (!!!!!!!!!!!!!!! ???????)
  *
  * Returns:
  *   - A dynamically allocated null-terminated string representing `x` in decimal form.
  *     Caller is responsible for freeing the string using `ix8_free_string()`.
  *   - If an error occurs, `NULL` is returned.
  */
-char* const ix8_to_string(const intx_t x);
+char* const ix8_to_string(const intx_t x, char** fptr);
 
 /*
  * Parses a big integer (`intx_t` instance) from a string representation.
@@ -598,7 +734,7 @@ char* const ix8_to_string(const intx_t x);
  *     Caller is responsible for freeing it using `ix8_free()`.
  *   - Otherwise, returns `intx_zero`.
  */
-intx_t ix8_from_string(const char* str);
+intx_t ix8_copy_s(const char* str);
 
 /*
  * Frees a string allocated by `ix8_to_string()`.
@@ -610,7 +746,7 @@ intx_t ix8_from_string(const char* str);
  *   - This function must only be used for strings returned by `ix8_to_string()`.
  *   - If `str` is `NULL`, the function does nothing.
  */
-inline void ix8_free_string(const char* str) { free((void *)str); }
+#define ix8_free_string(str)	free((void *)str)
 
 
 #endif	// __intex8_IX8_H__

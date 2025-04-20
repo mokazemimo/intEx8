@@ -5,8 +5,8 @@
  *      arbitrary-precision integer arithmetic.
  *
  *      This file includes:
- *      - `intex8.h`: Memory-managed interface for big integer operations.
- *      - `ix8.h`: Low-level interface where the caller provides memory.
+ *      - `ix8.h`: Memory-managed interface for big integer operations.
+ *      - `i8.h`: Low-level interface where the caller provides memory.
  *      - Error handling definitions, including `intEx8_errno` and error codes.
  *
  *  Author: Moham KazemiMoghaddam
@@ -19,26 +19,11 @@
 
 #include "intx.h"
 
-/* Internal function. Do NOT call this directly! */
-inline const bool _has_sign_bit(dig_t a) {
-	return (a & INTEX8_DIGIT_SIGN_MASK()) == INTEX8_DIGIT_SIGN_MASK();
-}
-
-/* Internal function. Do NOT call this directly! */
-inline const dig_t _get_ext(intx_t a) {
-	return (a.size > 0 && _has_sign_bit(a.ptr[a.size - 1])) ? INTEX8_DIGIT_MAX_VALUE() : 0;
-}
-
-/* Internal function. Do NOT call this directly! */
-inline dig_t _right_shift_digit(dig_t x, size_t n) {
-	return _has_sign_bit(x) ? ((INTEX8_DIGIT_HI_BITS_UINT64() | x) >> n) : (x >> n);
-}
-
 /*
  * Defines the maximum number of significant digits (excluding trailing zeros) supported for multiplication.
  *
  * Usage:
- *   - If the size of either operand in `ix8_x_mul_x` or `i8_x_mul_x` exceeds this limit, the function sets
+ *   - If the size of either operand in `ix8_mul` or `i8_mul` exceeds this limit, the function sets
  *     `INTEX8_ERR_MAX_MULTIPLICATION_DIGITS_EXCEEDED` and returns `intx_zero`.
  *   - Developers can increase this value to support larger integers if needed.
  *
@@ -53,7 +38,7 @@ inline dig_t _right_shift_digit(dig_t x, size_t n) {
   * Defines the maximum number of digits allowed for the dividend.
   *
   * Usage:
-  *   - If `ix8_x_div_x() or ix8_x_mod_x()`, `i8_x_div_x() or i8_x_mod_x()`, is called with a dividend exceeding this limit,
+  *   - If `ix8_div() or ix8_mod()`, `i8_div() or i8_mod()`, is called with a dividend exceeding this limit,
   *     the function reports `INTEX8_ERR_MAX_DIVIDEND_DIGITS_EXCEEDED` and returns intx_zero.
   *   - This constraint helps prevent unnecessary memory allocations and performance degradation.
   *
@@ -63,14 +48,15 @@ inline dig_t _right_shift_digit(dig_t x, size_t n) {
   */
 #define INTEX8_MAX_DIVIDEND_DIGITS		2048 // Supports division of integers up to 65,536 bits (~19,728 decimal digits).
 
+#define INTEX8_FAVOR_SPEED
+
   // Error codes
 #define INTEX8_OK                  0
 #define INTEX8_ERR_DIVISION_BY_ZERO						1
 #define INTEX8_ERR_MEMORY_ALLOCATION_FAILED				2
 #define INTEX8_ERR_INVALID_DECIMAL_STRING				3
-#define INTEX8_ERR_CANNOT_NEGATE_EXTREME_NEGATIVE		4
-#define INTEX8_ERR_MAX_MULTIPLICATION_DIGITS_EXCEEDED	5
-#define INTEX8_ERR_MAX_DIVIDEND_DIGITS_EXCEEDED			6
+#define INTEX8_ERR_MAX_MULTIPLICATION_DIGITS_EXCEEDED	4
+#define INTEX8_ERR_MAX_DIVIDEND_DIGITS_EXCEEDED			5
 
 #ifdef __cplusplus
 extern "C" {
@@ -81,11 +67,7 @@ extern "C" {
 }
 #endif
 
-inline int intEx8_init()
-{
-	intEx8_errno = INTEX8_OK;
-	return intEx8_errno;
-}
+#define intEx8_init()	(intEx8_errno = INTEX8_OK)
 
 #include "i8.h"
 #include "ix8.h"

@@ -2,11 +2,11 @@
  *  File: intx.h
  *  Description:
  *      Declares `dig_t` and `intx_t` as the main data types for representing big integers.
- *      Provides type definitions and structures used throughout the intEx8 library.
+ *      Provides type definitions and structures used in the intEx8 library.
  *
  *  Author: Moham KazemiMoghaddam
  *  Created: 07-Jan-2025
- *  License: GNU General Public License v3.0
+ *  License: GNU General Public License v3.0 (GPL-3.0)
  */
 
 #ifndef __intex8__INTX_H__
@@ -17,20 +17,22 @@
 #endif
 #include <stdint.h>
 
+#pragma pack(8)
+
 /*
- * Defines the base unit (digit) used for representing large integers.
+ * Defines the base unit (digit) used for representing big integers.
  *
  * Performance Considerations:
  *   - On most architectures, `uint32_t` ensures optimal performance for arithmetic operations.
  */
 typedef uint32_t dig_t;
 
-#define INTEX8_DIGIT_COUNT_IN_64BITS		2	// sizeof(uint64_t) / sizeof(dig_t)
-inline const uint64_t INTEX8_DIGIT_HI_BITS_UINT64() { return 0xFFFFFFFF00000000LL; }
-inline const uint64_t INTEX8_DIGIT_MAX_VALUE() { return 0xFFFFFFFFL; }
-inline const uint64_t INTEX8_DIGIT_EXTREME_POSITIVE() { return 0x7FFFFFFFL; }
-inline const uint64_t INTEX8_DIGIT_SIGN_MASK() { return 0x80000000L; }
-inline const uint64_t INTEX8_DIGIT_BIT_WIDTH() { return 32; }
+#define INTEX8_DIGIT_COUNT_IN_64BITS	2	// = sizeof(uint64_t) / sizeof(dig_t)
+#define INTEX8_DIGIT_HI_BITS_UINT64		0xFFFFFFFF00000000LL
+#define INTEX8_DIGIT_MAX_VALUE			0xFFFFFFFFLL
+#define INTEX8_DIGIT_MAX_POSITIVE		0x7FFFFFFFLL
+#define INTEX8_DIGIT_SIGN_MASK			0x80000000LL
+#define INTEX8_DIGIT_BIT_WIDTH			32LL
 
 typedef union {
 	uint64_t a;
@@ -40,33 +42,28 @@ typedef union {
 typedef uni_t uni64_t;
 
 /*
- * Represents a dynamically allocated arbitrary-precision integer.
+ * Represents a big (arbitrary-precision) integer.
  *
  * Structure Members:
- *   - ptr: Pointer to an array of digits (`dig_t`), representing the big integer in base 2^DIGIT_BITS.
+ *   - ptr: Pointer to an array of digits (`dig_t`), representing the big integer in base BASE=`2^INTEX8_DIGIT_BIT_WIDTH` (=4'294'967'296).
  *          The least significant digit is stored at `ptr[0]`, and the most significant digit at `ptr[size - 1]`.
- *   - size: The number of digits currently used in `ptr`.
+ *   - size: Number of digits currently used in `ptr`.
  *           A value of `0` indicates that the integer is ZERO.
  *
  * Sign Representation:
- *   - The most significant bit (MSB) of the most significant digit determines the sign:
- *       - 0: Positive integer
- *       - 1: Negative integer
+ *   - The sign of `size` determines the sign:
+ *       - size > 0 : Positive integer
+ *       - size < 0 : Negative integer
  * 
- * Example:
- *   - If `x` is a big integer stored as `{{0xFFFFFFFE, 0x00000002}, 2}`, it represents:
- *     (2 * 2^32) + (0xFFFFFFFE) = 8589934590
- *
+ * Examples:
+ *   - 1. A big integer stored as `{{27, 2}, 2}`, represents: 27 + 2*BASE = 8'589'934'619
+ *   - 2. A big integer stored as `{{671, 1290}, -2}`, represents: -(671 + 1290*BASE) = -5'540'507'812'511
+ *   - 3. A big integer stored as `{{7, 4, 9}, 3}`, represents: 7 + 4*BASE + 9*(BASE^2) = 166'020'696'680'565'833'735
  */
+typedef int64_t cntx_t;
 typedef struct _intx_t {
 	dig_t* ptr;
-	union {
-		size_t size;
-		struct {
-			uint32_t count;
-			int32_t point;
-		};
-	};
+	cntx_t size;
 } intx_t;
 
 #endif	// __intex8__INTX_H__

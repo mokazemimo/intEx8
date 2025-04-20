@@ -6,7 +6,7 @@
  *
  *  Author: Moham KazemiMoghaddam
  *  Created: 11-Jan-2025
- *  License: GNU General Public License v3.0
+ *  License: GNU General Public License v3.0 (GPL-3.0)
  */
 
 #ifndef __intex8_I8_H__
@@ -14,14 +14,16 @@
 
 #include "intx.h"
 
+/* Internal macro. Do NOT call this directly! */
+#define _right_shift_digit(x, n)	((x) >> (n))
+
 /*
- * Creates a copy of a big integer (`intx_t` instance).
+ * Creates a copy of a big integer and stores it in `dest`.
  *
  * Parameters:
  *   - x: Big integer to copy.
  *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for (x.size) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
+ *           Caller must allocate space for `x.size` digits to store the result.
  *
  * Returns:
  *   - A new `intx_t` instance equal to `x`.
@@ -30,93 +32,72 @@
 intx_t i8_copy(const intx_t x, dig_t* dest);
 
 /*
- * Creates a big integer from an int64.
+ * Creates a big integer equal to an int64 and stores it in `dest`.
  *
  * Parameters:
  *   - x: int64 value.
  *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for `_get_int_size(x)` digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
+ *           Caller must allocate space for `_required_digits_for_int64(x)` digits to store the result.
  *
  * Returns:
  *   - A new `intx_t` instance equal to `x`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_from_int(int64_t x, dig_t* dest);
+intx_t i8_copy_i(int64_t x, dig_t* dest);
 
 /*
- *  Trims leading trivial digits from a big integer in-place.
+ * Trims leading trivial digits of a big integer.
  *
- *  Description:
- *      Removes unnecessary leading digits from `x` to minimize its storage size.
- *      - For positive numbers, leading zero digits (0x00000000) are removed.
- *      - For negative numbers, leading sign-extension digits (0xFFFFFFFF) are removed.
+ * Description:
+ *     Removes unnecessary leading digits from `x` to minimize its storage size.
+ *     - Leading zero digits (0x00000000) are removed.
  *
- *  Parameters:
- *      - x: The big integer to be trimmed.
+ * Parameters:
+ *     - x: The big integer to be trimmed.
  *
- *  Returns:
- *      - `x`, with its `size` field updated.
+ * Returns:
+ *     - `x`, with its `size` field updated.
  */
 intx_t i8_trim(const intx_t x);
 
 //----------------------------------------------------------------------------------------------------------
 // Arithmetic operations:
-// i8_x_add_x(), i8_x_add_i(), i8_x_add_eq_x(),
-// i8_x_sub_x(), i8_x_sub_i(), i8_i_sub_x(),
-// i8_x_mul_x(), i8_x_mul_i(),
-// i8_x_div_x(), i8_x_div_i(), i8_i_div_x(),
-// i8_x_mod_x(), i8_x_mod_i(), i8_i_mod_x(),
-// i8_negate(), i8_negate_self(), i8_abs(), i8_abs_self()
+// i8_add(), i8_add_i(), i8_addeq(),
+// i8_sub(), i8_sub_i(), i8_i_sub(),
+// i8_mul(), i8_mul_i(),
+// i8_div(), i8_div_i(),
+// i8_mod(), i8_mod_i(), i8_i_mod(),
+// i8_negate(), i8_abs(), i8_abs_me()
 
 /*
- * Adds two big integers (`intx_t` instances).
+ * Adds two big integers and stores the result in `dest`.
  *
  * Parameters:
  *   - x: The first big integer.
  *   - y: The second big integer.
  *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for at least (max(x.size, y.size) + 1) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
+ *           Caller must allocate space for at least `_required_digits_for_sum(x, y)` digits to store the result.
  *
  * Returns:
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x + y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_x_add_x(const intx_t x, const intx_t y, dig_t* dest);
+intx_t i8_add(const intx_t x, const intx_t y, dig_t* dest);
 
 /*
- * Adds an int64 to a big integer.
+ * Adds an int64 to a big integer and stores the result in `dest`.
  *
  * Parameters:
  *   - x: The big integer.
  *   - y: The int64.
  *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for at least (max(x.size, y.size) + 1) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
+ *           Caller must allocate enough space (call _required_digits_for_sum(x, i8_copy_i(y,..))) for `dest` to store the result.
  *
  * Returns:
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x + y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_x_add_i(const intx_t x, int64_t y, dig_t* dest);
-
-/*
- * Adds a big integer (`intx_t` instance) to another in place (`x += y`).
- *
- * Parameters:
- *   - x: Big integer to be modified.
- *   - y: Big integer to be added to `x`.
- *
- * Returns:
- *   - If `ix8_errno` is `IX8_OK`, `x` is updated with the sum `x + y` and returned.
- *   - Otherwise, returns `intx_zero`.
- *
- * Note:
- *   - Caller is responsible for ensuring `x` has at least max(x.size, y.size) digits space to store the result.
- *   - Caller is responsible for an additional digit (e.g., due to carry), if the result requires.
- */
-intx_t i8_x_add_eq_x(intx_t x, const intx_t y);
+intx_t i8_add_i(const intx_t x, int64_t y, dig_t* dest);
 
 /*
  * Subtracts one big integer from another (`intx_t` instances).
@@ -132,7 +113,7 @@ intx_t i8_x_add_eq_x(intx_t x, const intx_t y);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x - y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_x_sub_x(const intx_t x, const intx_t y, dig_t* dest);	// -
+intx_t i8_sub(const intx_t x, const intx_t y, dig_t* dest);
 
 /*
  * Subtracts an int64 from a big integer.
@@ -148,7 +129,7 @@ intx_t i8_x_sub_x(const intx_t x, const intx_t y, dig_t* dest);	// -
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x - y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_x_sub_i(const intx_t x, int64_t y, dig_t* dest);
+intx_t i8_sub_i(const intx_t x, int64_t y, dig_t* dest);
 
 /*
  * Subtracts a big integer from an int64.
@@ -164,41 +145,7 @@ intx_t i8_x_sub_i(const intx_t x, int64_t y, dig_t* dest);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x - y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_i_sub_x(int64_t x, const intx_t y, dig_t* dest);
-
-/*
- * Subtracts a big integer (`intx_t` instance) from another in place (`x -= y`).
- *
- * Parameters:
- *   - x: Big integer to be modified.
- *   - y: Big integer to be subtracted from `x`.
- *
- * Returns:
- *   - If `ix8_errno` is `IX8_OK`, `x` is updated with the difference `x - y` and returned.
- *   - Otherwise, returns `intx_zero`.
- *
- * Note:
- *   - Caller is responsible for ensuring `x` has at least max(x.size, y.size) digits space to store the result.
- *   - If `x` becomes an Extreme Negative, an additional digit may be required.
- */
-intx_t i8_x_sub_eq_x(intx_t x, intx_t y);
-
-/*
- * Subtracts an int64 from big integer in place (`x -= y`).
- *
- * Parameters:
- *   - x: Big integer to be modified.
- *   - y: int64 to be subtracted from `x`.
- *
- * Returns:
- *   - If `ix8_errno` is `IX8_OK`, `x` is updated with the difference `x - y` and returned.
- *   - Otherwise, returns `intx_zero`.
- *
- * Note:
- *   - Caller is responsible for ensuring `x` has at least max(x.size, y.size) digits space to store the result.
- *   - If `x` becomes an Extreme Negative, an additional digit may be required.
- */
-intx_t i8_x_sub_eq_i(intx_t x, int64_t y);
+intx_t i8_i_sub(int64_t x, const intx_t y, dig_t* dest);
 
 /*
  * Multiplies two big integers (`intx_t` instances).
@@ -214,7 +161,7 @@ intx_t i8_x_sub_eq_i(intx_t x, int64_t y);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x * y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_x_mul_x(const intx_t x, const intx_t y, dig_t* dest);
+intx_t i8_mul(const intx_t x, const intx_t y, dig_t* dest);
 
 /*
  * Multiplies a big integer by an int64.
@@ -230,7 +177,20 @@ intx_t i8_x_mul_x(const intx_t x, const intx_t y, dig_t* dest);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x * y`.
  *   - Otherwise, `intx_zero`.
  */
-intx_t i8_x_mul_i(const intx_t x, int64_t y, dig_t* dest);
+intx_t i8_mul_i(const intx_t x, int64_t y, dig_t* dest);
+
+/*
+ * Multiplies one big integer to a power-of-two sgn(y)*2^|y| (`x * (sgn(y)*2^|y|)`).
+ *
+ * Parameters:
+ *   - x: The big integer.
+ *   - y: The int64.
+ *
+ * Returns:
+ *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x * (sgn(y)*2^|y|)`.
+ *   - Otherwise, `intx_zero`.
+ */
+intx_t i8_mul_p2(intx_t x, int64_t p, dig_t* dest);
 
 /*
  * Divides one big integer by another (`intx_t` instances).
@@ -245,112 +205,54 @@ intx_t i8_x_mul_i(const intx_t x, int64_t y, dig_t* dest);
  * Returns:
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x / y` (quotient of the division).
  *   - Otherwise, `intx_zero`.
- *
- * Notes:
- *   - If `x` and `y` are positive, the following holds:
- *       `(-x) / y == -(x / y) == -(x / (-y)) == (-x) / (-y)`.
  */
-intx_t i8_x_div_x(const intx_t x, const intx_t y, dig_t* dest);
+intx_t i8_div(intx_t x, const intx_t yi, dig_t* dest);
 
 /*
- * Divides a big integer by an int64.
+ * Divides one big integer by a power-of-two sgn(y)*2^|y| (`x / (sgn(y)*2^|y|)`).
+ *
+ * Parameters:
+ *   - x: Pointer to dividend (big integer to be divided).
+ *   - y: The power-of-two (to divide by).
+ *
+ * Returns:
+ *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x / (sgn(y)*2^|y|)` (quotient of the division).
+ *   - Otherwise, intx_zero.
+ */
+intx_t i8_div_p2(intx_t x, int64_t y, dig_t* dest);
+
+/*
+ * Computes the remainder of the division of one big integer by another and stores the result in `dest`.
  *
  * Parameters:
  *   - x: The dividend (big integer to be divided).
- *   - y: The divisor (int64 to divide by).
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for at least `_get_quotient_size(x, y)` digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
+ *   - y: The divisor (big integer to divide by).
+ *   - dest: Either NULL or pointer to the memory segment where the result will be stored.
+ *           Caller must allocate enough space for `dest` to store the result.
  *
  * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x / y` (quotient of the division).
- *   - Otherwise, `intx_zero`.
- *
- * Notes:
- *   - If `x` and `y` are positive, the following holds:
- *       `(-x) / y == -(x / y) == -(x / (-y)) == (-x) / (-y)`.
+ *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x % y` (the remainder of `x / y`).
+ *   - Otherwise, returns `intx_zero`.
  */
-intx_t i8_x_div_i(const intx_t x, int64_t y, dig_t* dest);
+intx_t i8_mod(intx_t x, const intx_t y, dig_t*);
 
 /*
- * Divides an int64 by a big integer.
+ * Computes the remainder of the division of a big integer by 2^|y|.
  *
  * Parameters:
  *   - x: The dividend (int64 to be divided).
- *   - y: The divisor (big integer to divide by).
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for at least `_get_quotient_size(x, y)` digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
+ *   - y: The power of two (to divide by).
  *
  * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x / y` (quotient of the division).
- *   - Otherwise, `intx_zero`.
- *
- * Notes:
- *   - If `x` and `y` are positive, the following holds:
- *       `(-x) / y == -(x / y) == -(x / (-y)) == (-x) / (-y)`.
- */
-intx_t i8_i_div_x(int64_t x, const intx_t y, dig_t* dest);
-
-/*
- * Computes the remainder of the division of one big integer by another (`intx_t` instances).
- *
- * Parameters:
- *   - x: The dividend (big integer to be divided).
- *   - y: The divisor (big integer to divide by).
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for at least (x.size) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x % y` (the remainder of `x / y`).
+ *   - If `intEx8_errno` is `INTEX8_OK`, a big integer representing `x % (2^|y|)` (the remainder of `x / (2^|y|)`).
  *   - Otherwise, returns `intx_zero`.
  *
  * Notes:
- *   - If `x` and `y` are positive, the following identity holds:
- *       `(-x) % y == -(x % y) == -(x % (-y)) == (-x) % (-y)`.
+ *   - The following identities hold:
+ *       ix8_mod_p2(x, -y) = ix8_mod_p2(x, y).
+ *       ix8_mod_p2(-x, y) = -ix8_mod_p2(x, y).
  */
-intx_t i8_x_mod_x(const intx_t x, const intx_t y, dig_t* dest);
-
-/*
- * Computes the remainder of the division of a big integer by an int64.
- *
- * Parameters:
- *   - x: The dividend (big integer to be divided).
- *   - y: The divisor (int64 to divide by).
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for at least (x.size) (?????????????) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x % y` (the remainder of `x / y`).
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - If `x` and `y` are positive, the following identity holds:
- *       `(-x) % y == -(x % y) == -(x % (-y)) == (-x) % (-y)`.
- */
-intx_t i8_x_mod_i(const intx_t x, int64_t y, dig_t* dest);
-
-/*
- * Computes the remainder of the division of an int64 by a big integer.
- *
- * Parameters:
- *   - x: The dividend (int64 to be divided).
- *   - y: The divisor (big integer to divide by).
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for at least (x.size) (?????????????) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x % y` (the remainder of `x / y`).
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - If `x` and `y` are positive, the following identity holds:
- *       `(-x) % y == -(x % y) == -(x % (-y)) == (-x) % (-y)`.
- */
-intx_t i8_i_mod_x(int64_t x, const intx_t y, dig_t* dest);
+intx_t i8_mod_p2(intx_t x, int64_t y, dig_t* dest);
 
 /*
  * Computes the negation of a big integer (`intx_t` instance).
@@ -366,24 +268,7 @@ intx_t i8_i_mod_x(int64_t x, const intx_t y, dig_t* dest);
  *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `-x`.
  *   - Otherwise, returns `intx_zero`.
  */
-intx_t i8_negate(const intx_t x, dig_t* dest);
-
-/*
- * Negates a big integer (`intx_t` instance) in place.
- *
- * Parameters:
- *   - x: Big integer to be negated.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, the negated `x` in place.
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - This function modifies `x` in place and does not create a new instance.
- *   - If 'x' is an Extreme Negative (i.e., ONLY the highest bit is set),
- *     caller is responsible to provide space for an additional digit beyond digits of 'x'
- */
-intx_t i8_negate_self(intx_t x);
+intx_t i8_negate(const intx_t x, dig_t *dest);
 
 /*
  * Computes the absolute value of a big integer (`intx_t` instance).
@@ -401,27 +286,12 @@ intx_t i8_negate_self(intx_t x);
  */
 intx_t i8_abs(const intx_t x, dig_t* dest);
 
-/*
- * Computes the absolute value of a big integer (`intx_t` instance) in place.
- *
- * Parameters:
- *   - x: Big integer to be modified to its absolute value.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, `x` converted to its absolute value (`|x|`).
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - This function modifies `x` in place and does not create a new instance.
- *   - If 'x' is an Extreme Negative (i.e., ONLY the highest bit is set),
- *     caller is responsible to provide space for an additional digit beyond digits of 'x'
- */
-intx_t i8_abs_self(intx_t x);
+void i8_abs_me(intx_t *x);
 
 //----------------------------------------------------------------------------------------------------------
 // Comparison operators:
-// i8_is_equal, i8_is_less_eq, i8_is_greater_eq, i8_is_less, i8_is_greater,
-// i8_is_zero, i8_is_positive, i8_is_negative, i8_is_min_negative, i8_is_pow2
+// i8_eq, i8_le, i8_ge, i8_lt, i8_gt,
+// i8_is_zero, i8_gt_zero, i8_lt_zero, i8_is_intx_min, i8_is_pow2
 
 /*
  * Checks if two big integers (`intx_t` instances) are equal.
@@ -437,7 +307,7 @@ intx_t i8_abs_self(intx_t x);
  * Note:
  *   - Assumes x and y are trimmed
  */
-bool i8_is_equal(const intx_t x, const intx_t y);
+bool i8_eq(const intx_t x, const intx_t y);
 
 /*
  * Checks if a big integer (`intx_t` instance) is less than or equal to another.
@@ -453,7 +323,7 @@ bool i8_is_equal(const intx_t x, const intx_t y);
  * Note:
  *   - Assumes x and y are trimmed
  */
-bool i8_is_less_eq(const intx_t x, const intx_t y);
+bool i8_le(const intx_t x, const intx_t y);
 
 /*
  * Checks if a big integer (`intx_t` instance) is greater than or equal to another.
@@ -469,7 +339,7 @@ bool i8_is_less_eq(const intx_t x, const intx_t y);
  * Note:
  *   - Assumes x and y are trimmed
  */
-inline bool i8_is_greater_eq(const intx_t x, const intx_t y) { return i8_is_less_eq(y, x); }
+#define i8_ge(x, y)		(true == i8_le(y, x))
 
 /*
  * Checks if a big integer (`intx_t` instance) is less than another.
@@ -485,7 +355,7 @@ inline bool i8_is_greater_eq(const intx_t x, const intx_t y) { return i8_is_less
  * Note:
  *   - Assumes x and y are trimmed
  */
-inline bool i8_is_less(const intx_t x, const intx_t y) { return !i8_is_less_eq(y, x); }
+#define i8_lt(x, y)		(false == i8_le(y, x))
 
 /*
  * Checks if a big integer (`intx_t` instance) is greater than another.
@@ -501,7 +371,7 @@ inline bool i8_is_less(const intx_t x, const intx_t y) { return !i8_is_less_eq(y
  * Note:
  *   - Assumes x and y are trimmed
  */
-inline bool i8_is_greater(const intx_t x, const intx_t y) { return !i8_is_less_eq(x, y); }
+#define i8_gt(x, y)		(false == i8_le(x, y))
 
 /*
  * Checks if a big integer (`intx_t` instance) is zero.
@@ -525,7 +395,7 @@ bool i8_is_zero(const intx_t x);
  *   - `true` if `x > 0`.
  *   - `false` otherwise.
  */
-bool i8_is_positive(const intx_t x);
+bool i8_gt_zero(const intx_t x);
 
 /*
  * Checks if a big integer (`intx_t` instance) is negative.
@@ -537,32 +407,87 @@ bool i8_is_positive(const intx_t x);
  *   - `true` if `x < 0`.
  *   - `false` otherwise.
  */
-bool i8_is_negative(const intx_t x);
-
-// NEW FUNCTION
-/*
- * Checks if a big integer is an Extreme Positive (i.e. ALL bits are set, but highest one).
- *
- * Parameters:
- *   - x: Big integer to check.
- *
- * Returns:
- *   - `true` if `x` is an Extreme Positive
- *   - Otherwise `false`.
- */
-bool i8_is_max_positive(const intx_t x);
+bool i8_lt_zero(const intx_t x);
 
 /*
- * Checks if a big integer is an Extreme Negative (i.e. ONLY highest bit of x is set).
+ * Checks if a big integer is equal to an int64.
  *
  * Parameters:
- *   - x: Big integer to check.
+ *   - x: The big integer.
+ *   - y: The int64.
  *
  * Returns:
- *   - `true` if `x` is an Extreme Negative
- *   - Otherwise `false`.
+ *   - `true` if `x == y`.
+ *   - `false` otherwise.
+ *
+ * Note:
+ *   - Assumes x is trimmed
  */
-bool i8_is_min_negative(const intx_t x);
+bool i8_eq_i(const intx_t x, const int64_t y);
+
+/*
+ * Checks if a big integer is less than or equal to an int64.
+ *
+ * Parameters:
+ *   - x: The big integer.
+ *   - y: The int64.
+ *
+ * Returns:
+ *   - `true` if `x <= y`.
+ *   - `false` otherwise.
+ *
+ * Note:
+ *   - Assumes x is trimmed
+ */
+bool i8_le_i(const intx_t x, const int64_t y);
+
+/*
+ * Checks if a big integer is less than an int64.
+ *
+ * Parameters:
+ *   - x: The big integer.
+ *   - y: The int64.
+ *
+ * Returns:
+ *   - `true` if `x < y`.
+ *   - `false` otherwise.
+ *
+ * Note:
+ *   - Assumes x is trimmed
+ */
+bool i8_lt_i(const intx_t x, const int64_t y);
+
+/*
+ * Checks if a big integer is greater than or equal to an int64.
+ *
+ * Parameters:
+ *   - x: The big integer.
+ *   - y: The int64.
+ *
+ * Returns:
+ *   - `true` if `x >= y`.
+ *   - `false` otherwise.
+ *
+ * Note:
+ *   - Assumes x is trimmed
+ */
+#define i8_ge_i(x, y)		(false == i8_lt_i(x, y))
+
+/*
+ * Checks if a big integer is greater than an int64.
+ *
+ * Parameters:
+ *   - x: The big integer.
+ *   - y: The int64.
+ *
+ * Returns:
+ *   - `true` if `x > y`.
+ *   - `false` otherwise.
+ *
+ * Note:
+ *   - Assumes x is trimmed
+ */
+#define i8_gt_i(x, y)		(false == i8_le_i(x, y))
 
 /*
  * Checks if a big integer is of the form `pow(2, n)` or `-pow(2, n)`, for some non-negative integer `n`.
@@ -577,164 +502,8 @@ bool i8_is_min_negative(const intx_t x);
 int64_t i8_is_pow2(const intx_t x);
 
 //----------------------------------------------------------------------------------------------------------
-// Binary operations:
-// i8_binary_and, i8_binary_or, i8_binary_xor, i8_binary_not, i8_binary_not_self,
-// i8_left_shift, i8_left_shift_self, i8_right_shift, i8_right_shift_self
-
-/*
- * Performs bitwise AND operation on two big integers (`intx_t` instances).
- *
- * Parameters:
- *   - x: The first big integer.
- *   - y: The second big integer.
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for at least max(x.size, y.size) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x & y`.
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - The result will have a `size` equal to the maximum `size` of the input arguments.
- *   - As per standard behavior, positive integers are extended beyond the highest bit with `0` bits,
- *     while negative integers are extended with `1` bits.
- */
-intx_t i8_binary_and(const intx_t x, const intx_t y, dig_t* dest);
-
-/*
- * Performs bitwise OR operation on two big integers (`intx_t` instances).
- *
- * Parameters:
- *   - x: The first big integer.
- *   - y: The second big integer.
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for at least max(x.size, y.size) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x | y`.
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - The result will have a `size` equal to the maximum `size` of the input arguments.
- *   - As per standard behavior, positive integers are extended beyond the highest bit with `0` bits,
- *     while negative integers are extended with `1` bits.
- */
-intx_t i8_binary_or(const intx_t x, const intx_t y, dig_t* dest);
-
-/*
- * Performs bitwise XOR operation on two big integers (`intx_t` instances).
- *
- * Parameters:
- *   - x: The first big integer.
- *   - y: The second big integer.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `x ^ y`.
- *   - Otherwise, returns `intx_zero`.
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for at least max(x.size, y.size) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
- *
- * Notes:
- *   - The result will have a `size` equal to the maximum `size` of the input arguments.
- *   - As per standard behavior, positive integers are extended beyond the highest bit with `0` bits,
- *     while negative integers are extended with `1` bits.
- */
-intx_t i8_binary_xor(const intx_t x, const intx_t y, dig_t* dest);
-
-/*
- * Computes the bitwise NOT of a big integer (`intx_t` instance).
- *
- * Parameters:
- *   - x: Big integer to be negated bitwise.
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for (x.size) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing `~x`.
- *   - Otherwise, returns `intx_zero`.
- */
-intx_t i8_binary_not(const intx_t x, dig_t* dest);
-
-/*
- * Computes the bitwise NOT of a big integer (`intx_t` instance) in place.
- *
- * Parameters:
- *   - x: Big integer to be modified to its bitwise complement.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, `x` after applying bitwise NOT (`~x`).
- *   - Otherwise, returns `intx_zero`.
- *
- * Notes:
- *   - This function modifies `x` in place and does not create a new instance.
- */
-intx_t i8_binary_not_self(intx_t x);
-
-/*
- * Performs a left bitwise shift operation on a big integer (`intx_t` instance).
- *
- * Parameters:
- *   - x: Big integer to be shifted.
- *   - bits: Number of bits to shift.
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for (x.size) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing the left-shifted value of `x`.
- *   - Otherwise, returns `intx_zero`.
- */
-intx_t i8_left_shift(const intx_t x, size_t bits, dig_t* dest);
-
-/*
- * Performs a left bitwise shift operation on a big integer (`intx_t` instance) in place.
- *
- * Parameters:
- *   - x: Big integer to be shifted.
- *   - bits: Number of bits to shift.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, the left-shifted value of `x` is stored in place.
- *   - Otherwise, returns `intx_zero`.
- */
-intx_t i8_left_shift_self(intx_t x, size_t bits);
-
-/*
- * Performs a right bitwise shift operation on a big integer (`intx_t` instance).
- *
- * Parameters:
- *   - x: Big integer to be shifted.
- *   - bits: Number of bits to shift.
- *   - dest: Pointer to the memory segment where the result will be stored.
- *           Caller must allocate space for (x.size) digits to store the result.
- *           Caller is responsible for managing the memory for `dest`.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, a new `intx_t` instance representing the right-shifted value of `x`.
- *   - Otherwise, returns `intx_zero`.
- */
-intx_t i8_right_shift(const intx_t x, size_t bits, dig_t* dest);
-
-/*
- * Performs a right bitwise shift operation on a big integer (`intx_t` instance) in place.
- *
- * Parameters:
- *   - x: Big integer to be shifted.
- *   - bits: Number of bits to shift.
- *
- * Returns:
- *   - If `intEx8_errno` is `INTEX8_OK`, the right-shifted value of `x` is stored in place.
- *   - Otherwise, returns `intx_zero`.
- */
-intx_t i8_right_shift_self(intx_t x, size_t bits);
-
-//----------------------------------------------------------------------------------------------------------
 // String conversion:
-// i8_to_string, i8_from_string
+// i8_to_string, i8_copy_s
 
 /*
  * Converts a positive big integer (`intx_t` instance) to its decimal string representation.
@@ -766,6 +535,6 @@ char* i8_to_string(const intx_t x, char* buf, size_t buf_size);
  *   - If `intEx8_errno` is `INTEX8_OK`, parsed `intx_t` instance stored in dest.
  *   - Otherwise `intx_zero`.
  */
-intx_t i8_from_string(const char* str, size_t len, dig_t* dest);
+intx_t i8_copy_s(const char* str, size_t len, dig_t* dest);
 
 #endif // __intex8_I8_H__
