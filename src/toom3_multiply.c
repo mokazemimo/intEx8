@@ -131,71 +131,65 @@ static bool _sum_gt(intx_t a, intx_t b, intx_t c)
 #define _shift_right(x, b)		((dig_t)(x >> b))
 
 /* Internal function. Do NOT call this directly! */
-static int _lt_2x(intx_t a, intx_t b)
+static bool _lt_2x(intx_t a, intx_t b)
 {	// returns true if |a| < 2*|b|, false otherwise
 	if (b.size == 0)
-		return 0;
+		return false;
 	else if (a.size == 0)
-		return 1;
+		return true;
 
 	int as = _abs(a.size);
 	int bs = _abs(b.size);
 	if (as < bs) {
-		return 1;
+		return true;
 	}
 	else if (as == bs) {
 		dig_t* b_ptr = b.ptr + (bs - 1);
 		if (*b_ptr & INTEX8_DIGIT_SIGN_MASK)
-			return 1;
+			return true;
 		dig_t* a_ptr = a.ptr + (as - 1);
 		if (*a_ptr < 2 * *b_ptr) {
-			return 1;
+			return true;
 		}
 
 		for (; a_ptr > a.ptr; ) {
 			dig_t d = (_shift_left(*b_ptr, 1) | _shift_right(b_ptr[-1], INTEX8_DIGIT_BIT_WIDTH - 1));
 			if (*a_ptr < d)
-				return 1;
+				return true;
 			else if (*a_ptr > d)
-				return 0;
+				return false;
 			--a_ptr;
 			--b_ptr;
 		}
-
-		if (a.ptr[0] < _shift_left(b.ptr[0], 1))
-			return 1;
-		return 0;
+		return (a.ptr[0] < _shift_left(b.ptr[0], 1));
 	}
 	else if (as == 1 && bs == 0) {
-		return 0;
+		return false;
 	}
 	else if (as == bs + 1) {
 		dig_t* a_ptr = a.ptr + (as - 1);
 		if (*a_ptr > 1) {
-			return 0;
+			return false;
 		}
 		dig_t* b_ptr = b.ptr + (bs - 1);
 		if (*b_ptr < INTEX8_DIGIT_SIGN_MASK)
-			return 0;
+			return false;
 
 		for (; a_ptr > a.ptr; ) {
 			dig_t d = (_shift_left(*a_ptr, INTEX8_DIGIT_BIT_WIDTH - 1) | _shift_right(a_ptr[-1], 1));
 			if (d < *b_ptr) {
-				return 1;
+				return true;
 			}
 			else if (d > *b_ptr) {
-				return 0;
+				return false;
 			}
 			--a_ptr;
 			--b_ptr;
 		}
-
-		if ((a.ptr[0] & 1) == 1)
-			return 0;
-		return 1;
+		return (a.ptr[0] & 1) != 1;
 	}
 	else {
-		return 0;
+		return false;
 	}
 }
 
@@ -358,11 +352,11 @@ static bool _4a_plus_b_gt_2c(intx_t a, intx_t b, intx_t c)
 static intx_t _toom3_subtract(intx_t x, intx_t y, dig_t* dest)
 {
 	if (y.size == 0) {
-		return i8_copy(x, dest); // x ??
+		return i8_copy(x, dest);
 	}
 	else if (x.size == 0) {
 		y.size = -y.size;
-		return i8_copy(y, dest); // y ??
+		return i8_copy(y, dest);
 	}
 
 	cntx_t sgn_x = _sgn(x.size);
@@ -519,7 +513,8 @@ static intx_t _toom3_adivide_by_2(intx_t a)
 	dig_t* ptr = a.ptr;
 	dig_t* pend = a.ptr + _abs(a.size) - 1;
 	for (; ptr < pend;) {
-		*ptr++ = (*ptr >> 1) | (ptr[1] << (INTEX8_DIGIT_BIT_WIDTH - 1));
+		*ptr = (*ptr >> 1) | (ptr[1] << (INTEX8_DIGIT_BIT_WIDTH - 1));
+		++ptr;
 	}
 	*ptr >>= 1;
 
@@ -621,11 +616,13 @@ static intx_t _2xb_minus_a(intx_t a, intx_t b)
 		for (; i < b_size; ++i) {
 			u.a += 2 * (uint64_t)*b.ptr++;
 			if (u.b[0] >= *a.ptr + h) {
-				*a.ptr++ = u.b[0] - (*a.ptr + h);
+				*a.ptr = u.b[0] - (*a.ptr + h);
+				++a.ptr;
 				h = 0;
 			}
 			else {
-				*a.ptr++ = (INTEX8_DIGIT_MAX_VALUE + 1) + u.b[0] - (*a.ptr + h);
+				*a.ptr = (INTEX8_DIGIT_MAX_VALUE + 1) + u.b[0] - (*a.ptr + h);
+				++a.ptr;
 				h = 1;
 			}
 			u.a = u.b[1];
@@ -641,11 +638,13 @@ static intx_t _2xb_minus_a(intx_t a, intx_t b)
 		for (; i < a_size; ++i) {
 			u.a += 2 * (uint64_t)*b.ptr++;
 			if (u.b[0] >= *a.ptr + h) {
-				*a.ptr++ = u.b[0] - (*a.ptr + h);
+				*a.ptr = u.b[0] - (*a.ptr + h);
+				++a.ptr;
 				h = 0;
 			}
 			else {
-				*a.ptr++ = (INTEX8_DIGIT_MAX_VALUE + 1) + u.b[0] - (*a.ptr + h);
+				*a.ptr = (INTEX8_DIGIT_MAX_VALUE + 1) + u.b[0] - (*a.ptr + h);
+				++a.ptr;
 				h = 1;
 			}
 			u.a = u.b[1];
@@ -2387,7 +2386,7 @@ intx_t _toom3_multiply(intx_t x, intx_t y, dig_t* dest)
 	memset(beg.out.ptr, 0, beg.out.size * sizeof(dig_t));
 
 	proVecx[proVecCounter++] = beg;
-	// test; debug
+
 	const int _basic_multiply_threshold = 50;
 	// 60: 3.97046 + 4.01573 + 3.99316 + 4.01123 + 3.92687
 	// 50: 3.52541 + 3.55416 + 3.49638 + 3.62553 + 3.5843

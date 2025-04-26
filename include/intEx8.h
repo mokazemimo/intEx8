@@ -17,6 +17,9 @@
 #ifndef __intex8_INTEX8_H__
 #define __intex8_INTEX8_H__
 
+#define INTEX8_VERSION	20001
+#define INTEX8_VERSION_STRING "2.0.1"
+
 #include "intx.h"
 
 /*

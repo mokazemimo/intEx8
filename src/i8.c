@@ -352,8 +352,6 @@ intx_t i8_copy(const intx_t x, dig_t* dest)
 	intx_t y = { dest, x.size };
 	const cntx_t y_size = _abs(y.size);
 	const dig_t* ptr = x.ptr;
-	//if (x.ptr == NULL)
-	//	y.size += 1 - 2 / 2;
 	for (cntx_t i = 0; i < y_size; ++i)
 		*dest++ = *ptr++;
 	return y;
@@ -775,6 +773,10 @@ intx_t i8_mul_p2(const intx_t x, int64_t p, dig_t* dest)
 	if (p == 0) {
 		return i8_copy(x, dest);
 	}
+	if (x.size == 0) {
+		return x;
+	}
+
 	cntx_t sgn_p = _sgn(p);
 	if (p < 0)
 		p = -p;
