@@ -4,7 +4,9 @@
   <img src="Logo.jpg" alt="intEx8 Logo" width="350">
 </p>
 
-# intEx8 (**Int**eger **Ex**tended Infinitely) - Arbitrary Precision Integer Library  
+# intEx8 (**Int**eger **Ex**tended Infinitely) - Arbitrary Precision Integer Library
+
+![Version](https://img.shields.io/badge/version-2.0.1-blue.svg)
 
 ## Overview  
 **intEx8** is a **C library** for handling **arbitrarily large integers**, supporting arithmetic, bitwise operations, and string conversion for numbers of **unlimited size** (unlike `int`, `long`, `int64_t`, etc.).  

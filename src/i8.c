@@ -926,7 +926,7 @@ intx_t i8_mod(intx_t x, const intx_t yi, dig_t *dest)
  * Computes the remainder of the division of a big integer `x` by `2^|y|` (x % 2^|y|) and returns the result stored in `dest`.
  * Caller must ensure `dest` has enough space for the result.
  */
-intx_t i8_mod_p2(intx_t x, int64_t y, dig_t* dest)
+intx_t i8_mod_p2(intx_t x, uint64_t y, dig_t* dest)
 {
 	if (dest == NULL) {
 		return _rightmost_bits(x, y);
@@ -1179,7 +1179,7 @@ static char* _add_string_to(char* str, size_t len, char* out, size_t outlen, uin
  * `size` specifies the allocated space (in bytes) for `str` and must be large enough to store the result.
  * Use `_required_decimal_count(x.size, false)` to determine the required size.
  */
-char* i8_to_string(const intx_t x, char* str, size_t size)
+char* i8_copy_to_s(const intx_t x, char* str, size_t size)
 {
 	if (size == 0)
 		return str;

@@ -249,10 +249,10 @@ intx_t i8_mod(intx_t x, const intx_t y, dig_t*);
  *
  * Notes:
  *   - The following identities hold:
- *       ix8_mod_p2(x, -y) = ix8_mod_p2(x, y).
- *       ix8_mod_p2(-x, y) = -ix8_mod_p2(x, y).
+ *       i8_mod_p2(x, -y) = i8_mod_p2(x, y).
+ *       i8_mod_p2(-x, y) = -i8_mod_p2(x, y).
  */
-intx_t i8_mod_p2(intx_t x, int64_t y, dig_t* dest);
+intx_t i8_mod_p2(intx_t x, uint64_t y, dig_t* dest);
 
 /*
  * Computes the negation of a big integer (`intx_t` instance).
@@ -503,7 +503,7 @@ int64_t i8_is_pow2(const intx_t x);
 
 //----------------------------------------------------------------------------------------------------------
 // String conversion:
-// i8_to_string, i8_copy_s
+// i8_copy_to_s, i8_copy_s
 
 /*
  * Converts a positive big integer (`intx_t` instance) to its decimal string representation.
@@ -518,7 +518,7 @@ int64_t i8_is_pow2(const intx_t x);
  * Returns:
  *   - buf + k (for some non-negative k < buf_size), where the null-terminated decimal string representation of `x` is stored.
  */
-char* i8_to_string(const intx_t x, char* buf, size_t buf_size);
+char* i8_copy_to_s(const intx_t x, char* buf, size_t buf_size);
 
 /*
  * Parses a big integer (`intx_t` instance) from its decimal string representation.

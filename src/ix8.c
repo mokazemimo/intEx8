@@ -7,7 +7,7 @@
  *  Notes:
  *      - `ix8` interface is the primary interface of the intEx8 library and is recommended for general use.
  *      - Caller is responsible for freeing NEW `intx_t` instances returned by functions using `ix8_free()`.
- *      - Caller must also free strings (`char *`) returned by `ix8_to_string()` using `ix8_free_string()`.
+ *      - Caller must also free strings (`char *`) returned by `ix8_copy_to_s()` using `ix8_free_s()`.
  *      - `ix8` functions internally call `i8` functions for computation.
  */
 
@@ -481,11 +481,6 @@ void ix8_diveq(intx_t *xi, const intx_t yi)
 		}
 		else {
 			*xi = i8_div(d, y, ptr);
-			// TODO: this is already checked!!
-			//if (ix8_is_zero(*xi)) {
-			//	free(ptr);
-			//	*xi = intx_zero;
-			//}
 		}
 	}
 }
@@ -538,7 +533,7 @@ void ix8_i_diveq(int64_t* x, const intx_t yi)
  * Devides one big integer `x` by `sgn(y) * (2^|y|)` in place.
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-void ix8_diveq_p2(intx_t *xi, int64_t y)	// x /= sgn(y) * (2^|y|)
+void ix8_diveq_p2(intx_t *xi, int64_t y)
 {
 	if (y == 0) {	// division by 2^0 (=1)
 		return;
@@ -621,12 +616,9 @@ int64_t ix8_mod_i(const intx_t xi, int64_t y)
 	if (i8_is_zero(x)) {
 		return 0;
 	}
-	//else if (x.size == 1) {
-	//	return sign * (int32_t)x.ptr[0] % y;
-	//}
-	//else if (x.size == INTEX8_DIGIT_COUNT_IN_64BITS) {
-	//	return sign * *(int64_t *)x.ptr % y;
-	//}
+	else if (x.size == 1) {
+		return sign * (int64_t)x.ptr[0] % y;
+	}
 	else if (x.size > INTEX8_MAX_DIVIDEND_DIGITS) {
 		intEx8_errno = INTEX8_ERR_MAX_DIVIDEND_DIGITS_EXCEEDED;
 		return 0;
@@ -668,38 +660,115 @@ int64_t ix8_i_mod(int64_t x, const intx_t yi)
 }
 
 /*
- * Computes the remainder of the division of a big integer `x` by `2^|y|` (x % 2^|y|).
+ * Computes the remainder of the division of a big integer `x` by a power-of-two `2^y` (x % (2^y)).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
-intx_t ix8_mod_p2(const intx_t xi, int64_t y)
+intx_t ix8_mod_p2(const intx_t xi, uint64_t y)
 {
 	if (y == 0)
 		return intx_zero;
 
 	intx_t x = i8_trim(xi);
 
-	cntx_t sign = _sgn(x.size);
-	x.size = _abs(x.size);
-	if (x.size > INTEX8_MAX_DIVIDEND_DIGITS) {
-		intEx8_errno = INTEX8_ERR_MAX_DIVIDEND_DIGITS_EXCEEDED;
-		return intx_zero;
-	}
+	intx_t ret = { NULL, (y + INTEX8_DIGIT_BIT_WIDTH - 1) / INTEX8_DIGIT_BIT_WIDTH };
 
-	dig_t dividend_buf[INTEX8_MAX_DIVIDEND_DIGITS];
-	intx_t ret = _call_i8_int64_interface(i8_copy(x, dividend_buf), y, 0, i8_mod_p2);
-
-	ret.ptr = (dig_t *)malloc(ret.size * sizeof(dig_t));
+	ret.ptr = (dig_t*)calloc(ret.size, sizeof(dig_t));
 	if (ret.ptr == NULL) {
 		intEx8_errno = INTEX8_ERR_MEMORY_ALLOCATION_FAILED;
 		return intx_zero;
 	}
-	memcpy(ret.ptr, dividend_buf, ret.size * sizeof(dig_t));
-	ret.size *= sign;
+	if (_abs(x.size) >= ret.size) {
+		memcpy(ret.ptr, x.ptr, ret.size * sizeof(dig_t));
+		y %= INTEX8_DIGIT_BIT_WIDTH;
+		if (y != 0) {
+			dig_t r = 1 << y, *ptr = &ret.ptr[ret.size - 1];
+			for (; r; r <<= 1)
+				*ptr &= ~r;
+		}
+	}
+	else {
+		memcpy(ret.ptr, x.ptr, _abs(x.size) * sizeof(dig_t));
+	}
+
+	ret.size *= _sgn(x.size);
 	return ret;
 }
 
 /*
+ * Computes the remainder of the division of a big integer `x` by a big integer `y` in place (x %= y).
+ * Caller is responsible for freeing `x` using `ix8_free()`.
+ */
+void ix8_modeq(intx_t* x, intx_t y)
+{
+	*x = i8_trim(*x);
+
+	cntx_t sign = _sgn(x->size);
+	x->size = _abs(x->size);
+
+	if (ix8_is_zero(y)) {
+		intEx8_errno = INTEX8_ERR_DIVISION_BY_ZERO;
+	}
+	else if (x->size > INTEX8_MAX_DIVIDEND_DIGITS) {
+		intEx8_errno = INTEX8_ERR_MAX_DIVIDEND_DIGITS_EXCEEDED;
+	}
+	else {
+		dig_t xbuf[INTEX8_MAX_DIVIDEND_DIGITS];
+
+		intx_t m = i8_trim(i8_mod(i8_copy(*x, xbuf), i8_trim(y), NULL));
+		if (m.size == 0) {
+			x->size = 0;
+		}
+		else {
+			dig_t* ptr = (dig_t*)realloc(x->ptr, m.size * sizeof(dig_t));
+			if (ptr == NULL) {
+				intEx8_errno = INTEX8_ERR_MEMORY_ALLOCATION_FAILED;
+			}
+			else {
+				x->size = sign * m.size;
+				x->ptr = ptr;
+				memcpy(x->ptr, xbuf, m.size * sizeof(dig_t));
+			}
+		}
+	}
+}
+
+/*
+ * Computes the remainder of the division of a big integer `x` by a power-of-two `2^y` in place (x %= (2^y)).
+ * Caller is responsible for freeing `x` using `ix8_free()`.
+ */
+void ix8_modeq_p2(intx_t* x, uint64_t y)
+{
+	if (y == 0) {
+		x->size = 0;
+		return;
+	}
+
+	cntx_t size = (y + INTEX8_DIGIT_BIT_WIDTH - 1) / INTEX8_DIGIT_BIT_WIDTH;
+
+	if (_abs(x->size) >= size) {
+		dig_t* ptr = (dig_t*)realloc(x->ptr, size * sizeof(dig_t));
+		if (ptr == NULL) {
+			intEx8_errno = INTEX8_ERR_MEMORY_ALLOCATION_FAILED;
+			return;
+		}
+		x->ptr = ptr;
+		y %= INTEX8_DIGIT_BIT_WIDTH;
+		if (y != 0) {
+			dig_t r = 1 << y;
+			ptr = &x->ptr[size - 1];
+			for (; r; r <<= 1)
+				*ptr &= ~r;
+		}
+
+		x->size = _sgn(x->size) * size;
+	}
+	else {
+	}
+}
+
+/*
  * Computes the remainder of the division of a big integer `x` by an int64 `y` in place (x %= y).
+ * Caller is responsible for freeing `x` using `ix8_free()`.
  */
 void ix8_modeq_i(intx_t *x, int64_t y)
 {
@@ -761,7 +830,7 @@ void ix8_i_modeq(int64_t *x, const intx_t yi)
 }
 
 /*
- * Computes the negation of a big integer `x` (-x).
+ * Computes the negative of a big integer `x` (-x).
  * Caller is responsible for freeing the result using `ix8_free()`.
  */
 intx_t ix8_negate(const intx_t x)
@@ -781,9 +850,9 @@ intx_t ix8_abs(const intx_t x)
 /*
  * Converts a big integer to a string representation and returns the result (intx_t to ascii).
  * BE CAREFUL: if a non-NULL value is passed for fptr, CALLER MUST FREE returned pointer in fptr.
- * If fptr is passed a NULL pointer, caller is responsible for freeing the result using `ix8_free_string()`.
+ * If fptr is passed a NULL pointer, caller is responsible for freeing the result using `ix8_free_s()`.
  */
-char* const ix8_to_string(const intx_t xi, char **fptr)
+char* const ix8_copy_to_s(const intx_t xi, char **fptr)
 {
 	intx_t x = i8_trim(xi);
 
@@ -808,7 +877,7 @@ char* const ix8_to_string(const intx_t xi, char **fptr)
 		return NULL;
 	}
 
-	char* ptr = i8_to_string(x, str, out_size);
+	char* ptr = i8_copy_to_s(x, str, out_size);
 
 	if (sign == -1) {
 		*(--ptr) = '-';
