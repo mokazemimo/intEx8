@@ -10,9 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [2.0.1] - 2025-04-27
 ### Fixed
 - Corrected undefined behavior in shift operation due to improper pointer increment (`*ptr++` issue).
-- `ix8_modeq` and `ix8_modeq_p2` macros are replaced with functions to avoid memory leaks!
-- Logic of `ix8_mod_p2` and ix8_modeq_p2 are completely renewed.
-- `ix8_to_string` renamed to `ix8_copy_to_s`; `i8_to_string` renamed to `i8_copy_to_s`; `ix8_free_string` renamed to `ix8_free_s`.
+- Replaced `ix8_modeq` and `ix8_modeq_p2` macros with equivalent functions to prevent memory leaks.
+
+### Refactored
+- Completely redesigned the logic of `ix8_mod_p2` and `ix8_modeq_p2` for performance and clarity.
+- Renamed functions for naming consistency:
+  - `ix8_to_string` to `ix8_copy_to_s`
+  - `i8_to_string` to `i8_copy_to_s`
+  - `ix8_free_string` to `ix8_free_s`
+
+### Documentation
+- Updated `intEx8.pdf` and `README.md`.
 
 ---
 
